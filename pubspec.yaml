@@ -1,5 +1,5 @@
-name: tevalearn_miniapp
-description: TevaLearn LMS MiniApp.
+name: augmentek_lms
+description: Augmentek LMS MiniApp.
 publish_to: 'none'
 version: 0.1.0
 
@@ -7,7 +7,7 @@ environment:
   sdk: '>=3.1.3 <4.0.0'
 
 dependencies:
-  firebase_core: ^2.17.0
+  firebase_core: ^2.17.0 # TODO: Remove this dependency when we have a proper backend
   flutter:
     sdk: flutter
   soar_quest: ^1.0.0

@@ -18,7 +18,7 @@ late MiniAppCollection lessons;
 bool isAdmin() => UserSettings.getSetting<bool>('Admin Mode')!;
 
 void main() async {
-  await SQApp.init('TevaLearn Courses');
+  await SQApp.init('Augmentek Courses');
 
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 

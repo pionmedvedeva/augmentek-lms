@@ -1,11 +1,11 @@
-# 📚 TevaLearn: LMS Courses Telegram MiniApp
+# 📚 Augmentek LMS
 
 ![Flutter Version](https://img.shields.io/badge/Flutter-v2.5.3-blue)
 ![License](https://img.shields.io/badge/License-MIT-green)
 ![Firebase](https://img.shields.io/badge/Firebase-Hosting-orange)
 ![Telegram API](https://img.shields.io/badge/Telegram-API-blue)
 
-Welcome to TevaLearn, an inclusive Learning Management System (LMS) designed as a Telegram Mini App. Our mission is to bridge the gap between content creators and their audiences on Telegram, with a keen focus on ensuring accessibility for individuals with disabilities. This initiative aligns with [Assisteva.com's](https://assisteva.com) commitment to inclusive solutions.
+Welcome to Augmentek LMS, an inclusive Learning Management System designed as a Telegram Mini App.
 
 ## 📌 Table of Contents
 
