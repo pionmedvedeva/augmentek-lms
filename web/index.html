@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en-US">
+<html>
 <head>
   <!--
     If you are serving your web app in a path other than the root, change the
@@ -18,39 +18,50 @@
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="A new Flutter project.">
+  <meta name="description" content="Augmentek LMS - Learning Management System">
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="mobile-web-app-capable" content="yes">
 
   <!-- iOS meta tags & icons -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="tevalearn_tg_miniapp">
+  <meta name="apple-mobile-web-app-title" content="Augmentek LMS">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
-  <title>tevalearn_tg_miniapp</title>
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="favicon.png"/>
+
+  <title>Augmentek LMS</title>
   <link rel="manifest" href="manifest.json">
-
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-
 
   <script>
     // The value below is injected by flutter build, do not touch.
-    const serviceWorkerVersion = null;
+    const serviceWorkerVersion = '{{flutter_service_worker_version}}';
   </script>
   <!-- This script adds the flutter initialization JS code -->
   <script src="flutter.js" defer></script>
+  <!-- Telegram WebApp script -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
+  <!-- This div is where your Flutter app will be rendered -->
+  <div id="flutter_app"></div> 
+  <!-- Никаких кастомных скриптов здесь, чтобы не мешать работе Flutter.js -->
   <script>
+    console.log('Page loading...');
+    
     window.addEventListener('load', function(ev) {
+      console.log('Window loaded, initializing Flutter...');
+      
       // Download main.dart.js
-      _flutter.loader.loadEntrypoint({
+      _flutter.loader.load({
         serviceWorker: {
           serviceWorkerVersion: serviceWorkerVersion,
         },
         onEntrypointLoaded: function(engineInitializer) {
           engineInitializer.initializeEngine().then(function(appRunner) {
+            console.log('Flutter engine initialized, running app...');
             appRunner.runApp();
           });
         }

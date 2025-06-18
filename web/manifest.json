@@ -1,11 +1,11 @@
 {
-    "name": "tevalearn_tg_miniapp",
-    "short_name": "tevalearn_tg_miniapp",
+    "name": "Augmentek LMS",
+    "short_name": "Augmentek LMS",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "Augmentek LMS - Learning Management System for Telegram",
     "orientation": "portrait-primary",
     "prefer_related_applications": false
 }

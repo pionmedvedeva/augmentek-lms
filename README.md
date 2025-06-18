@@ -133,8 +133,6 @@ We believe in the power of community and open discussion. If you have any ideas,
 ## 🤝 Contributing
 Contributions are welcome!
 
-
-
 ## 📜 License
 
 This project is licensed under the MIT License. See the [LICENSE](path_to_license.md) file for details.
