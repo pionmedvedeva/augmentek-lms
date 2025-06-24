@@ -20,13 +20,18 @@
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <meta name="description" content="Augmentek LMS - Learning Management System">
   
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-status-bar-style" content="default">
 
   <!-- iOS meta tags & icons -->
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Augmentek LMS">
+  
+  <!-- Telegram WebApp meta tags -->
+  <meta name="telegram-web-app-capable" content="yes">
+  <meta name="telegram-web-app-status-bar-style" content="default">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
   <!-- Favicon -->
@@ -34,38 +39,117 @@
 
   <title>Augmentek LMS</title>
   <link rel="manifest" href="manifest.json">
+  
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      box-sizing: border-box;
+      -webkit-overflow-scrolling: touch;
+    }
+    
+    #loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      background-color: #673AB7;
+      color: white;
+      font-family: Arial, sans-serif;
+    }
+    
+    /* Адаптивные стили для Telegram WebApp */
+    .telegram-web-app {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    /* Пусть Flutter использует доступное пространство */
+    flt-glass-pane {
+      width: 100% !important;
+      height: 100% !important;
+      min-height: var(--tg-viewport-height, 100%);
+    }
+  </style>
 
   <script>
     // The value below is injected by flutter build, do not touch.
     const serviceWorkerVersion = '{{flutter_service_worker_version}}';
   </script>
-  <!-- This script adds the flutter initialization JS code -->
-  <script src="flutter.js" defer></script>
   <!-- Telegram WebApp script -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <!-- Flutter Bootstrap -->
+  <script src="flutter_bootstrap.js" async></script>
 </head>
 <body>
-  <!-- This div is where your Flutter app will be rendered -->
-  <div id="flutter_app"></div> 
-  <!-- Никаких кастомных скриптов здесь, чтобы не мешать работе Flutter.js -->
+  <div id="loading">
+    <div>Loading Augmentek LMS...</div>
+  </div>
+  
   <script>
-    console.log('Page loading...');
-    
-    window.addEventListener('load', function(ev) {
-      console.log('Window loaded, initializing Flutter...');
-      
-      // Download main.dart.js
-      _flutter.loader.load({
-        serviceWorker: {
-          serviceWorkerVersion: serviceWorkerVersion,
-        },
-        onEntrypointLoaded: function(engineInitializer) {
-          engineInitializer.initializeEngine().then(function(appRunner) {
-            console.log('Flutter engine initialized, running app...');
-            appRunner.runApp();
-          });
+    // Initialize Telegram WebApp in fullsize mode (not fullscreen)
+    function initTelegramWebApp() {
+      if (window.Telegram && window.Telegram.WebApp) {
+        const webapp = window.Telegram.WebApp;
+        
+        try {
+          console.log('Initializing Telegram WebApp...');
+          console.log('Initial viewport height:', webapp.viewportHeight);
+          console.log('Window inner height:', window.innerHeight);
+          
+          // Request fullsize mode (not fullscreen)
+          webapp.expand();
+          webapp.ready();
+          
+          // Set CSS custom property for viewport height
+          document.documentElement.style.setProperty('--tg-viewport-height', webapp.viewportHeight + 'px');
+          
+          console.log('After expand - viewport height:', webapp.viewportHeight);
+          
+          return true;
+        } catch (e) {
+          console.log('Error initializing WebApp:', e);
         }
-      });
+      }
+      return false;
+    }
+    
+    // Try to initialize when Telegram WebApp is available
+    if (window.Telegram && window.Telegram.WebApp) {
+      initTelegramWebApp();
+    } else {
+      // Wait for Telegram script to load
+      let attempts = 0;
+      const checkTelegram = setInterval(() => {
+        attempts++;
+        if (window.Telegram && window.Telegram.WebApp) {
+          initTelegramWebApp();
+          clearInterval(checkTelegram);
+        } else if (attempts > 50) { // 5 seconds timeout
+          console.log('Telegram WebApp not found after 5 seconds');
+          clearInterval(checkTelegram);
+        }
+      }, 100);
+    }
+    
+    // Remove loading when Flutter is ready
+    window.addEventListener('flutter-first-frame', function () {
+      var loading = document.getElementById('loading');
+      if (loading) {
+        loading.remove();
+      }
+      
+      // Try to initialize again when Flutter is ready
+      setTimeout(() => {
+        if (window.Telegram && window.Telegram.WebApp) {
+          const webapp = window.Telegram.WebApp;
+          document.documentElement.style.setProperty('--tg-viewport-height', webapp.viewportHeight + 'px');
+        }
+      }, 100);
     });
   </script>
 </body>

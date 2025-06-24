@@ -21,13 +21,7 @@ Category _$CategoryFromJson(Map<String, dynamic> json) {
 /// @nodoc
 mixin _$Category {
   String get id => throw _privateConstructorUsedError;
-  String get title => throw _privateConstructorUsedError;
-  String get description => throw _privateConstructorUsedError;
-  String? get imageUrl => throw _privateConstructorUsedError;
-  List<String> get courseIds => throw _privateConstructorUsedError;
-  bool get isPublished => throw _privateConstructorUsedError;
-  DateTime? get createdAt => throw _privateConstructorUsedError;
-  DateTime? get updatedAt => throw _privateConstructorUsedError;
+  String get name => throw _privateConstructorUsedError;
 
   /// Serializes this Category to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -44,15 +38,7 @@ abstract class $CategoryCopyWith<$Res> {
   factory $CategoryCopyWith(Category value, $Res Function(Category) then) =
       _$CategoryCopyWithImpl<$Res, Category>;
   @useResult
-  $Res call(
-      {String id,
-      String title,
-      String description,
-      String? imageUrl,
-      List<String> courseIds,
-      bool isPublished,
-      DateTime? createdAt,
-      DateTime? updatedAt});
+  $Res call({String id, String name});
 }
 
 /// @nodoc
@@ -71,47 +57,17 @@ class _$CategoryCopyWithImpl<$Res, $Val extends Category>
   @override
   $Res call({
     Object? id = null,
-    Object? title = null,
-    Object? description = null,
-    Object? imageUrl = freezed,
-    Object? courseIds = null,
-    Object? isPublished = null,
-    Object? createdAt = freezed,
-    Object? updatedAt = freezed,
+    Object? name = null,
   }) {
     return _then(_value.copyWith(
       id: null == id
           ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
               as String,
-      title: null == title
-          ? _value.title
-          : title // ignore: cast_nullable_to_non_nullable
+      name: null == name
+          ? _value.name
+          : name // ignore: cast_nullable_to_non_nullable
               as String,
-      description: null == description
-          ? _value.description
-          : description // ignore: cast_nullable_to_non_nullable
-              as String,
-      imageUrl: freezed == imageUrl
-          ? _value.imageUrl
-          : imageUrl // ignore: cast_nullable_to_non_nullable
-              as String?,
-      courseIds: null == courseIds
-          ? _value.courseIds
-          : courseIds // ignore: cast_nullable_to_non_nullable
-              as List<String>,
-      isPublished: null == isPublished
-          ? _value.isPublished
-          : isPublished // ignore: cast_nullable_to_non_nullable
-              as bool,
-      createdAt: freezed == createdAt
-          ? _value.createdAt
-          : createdAt // ignore: cast_nullable_to_non_nullable
-              as DateTime?,
-      updatedAt: freezed == updatedAt
-          ? _value.updatedAt
-          : updatedAt // ignore: cast_nullable_to_non_nullable
-              as DateTime?,
     ) as $Val);
   }
 }
@@ -124,15 +80,7 @@ abstract class _$$CategoryImplCopyWith<$Res>
       __$$CategoryImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call(
-      {String id,
-      String title,
-      String description,
-      String? imageUrl,
-      List<String> courseIds,
-      bool isPublished,
-      DateTime? createdAt,
-      DateTime? updatedAt});
+  $Res call({String id, String name});
 }
 
 /// @nodoc
@@ -149,47 +97,17 @@ class __$$CategoryImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? id = null,
-    Object? title = null,
-    Object? description = null,
-    Object? imageUrl = freezed,
-    Object? courseIds = null,
-    Object? isPublished = null,
-    Object? createdAt = freezed,
-    Object? updatedAt = freezed,
+    Object? name = null,
   }) {
     return _then(_$CategoryImpl(
       id: null == id
           ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
               as String,
-      title: null == title
-          ? _value.title
-          : title // ignore: cast_nullable_to_non_nullable
+      name: null == name
+          ? _value.name
+          : name // ignore: cast_nullable_to_non_nullable
               as String,
-      description: null == description
-          ? _value.description
-          : description // ignore: cast_nullable_to_non_nullable
-              as String,
-      imageUrl: freezed == imageUrl
-          ? _value.imageUrl
-          : imageUrl // ignore: cast_nullable_to_non_nullable
-              as String?,
-      courseIds: null == courseIds
-          ? _value._courseIds
-          : courseIds // ignore: cast_nullable_to_non_nullable
-              as List<String>,
-      isPublished: null == isPublished
-          ? _value.isPublished
-          : isPublished // ignore: cast_nullable_to_non_nullable
-              as bool,
-      createdAt: freezed == createdAt
-          ? _value.createdAt
-          : createdAt // ignore: cast_nullable_to_non_nullable
-              as DateTime?,
-      updatedAt: freezed == updatedAt
-          ? _value.updatedAt
-          : updatedAt // ignore: cast_nullable_to_non_nullable
-              as DateTime?,
     ));
   }
 }
@@ -197,16 +115,7 @@ class __$$CategoryImplCopyWithImpl<$Res>
 /// @nodoc
 @JsonSerializable()
 class _$CategoryImpl implements _Category {
-  const _$CategoryImpl(
-      {required this.id,
-      required this.title,
-      required this.description,
-      this.imageUrl,
-      final List<String> courseIds = const [],
-      this.isPublished = false,
-      this.createdAt,
-      this.updatedAt})
-      : _courseIds = courseIds;
+  const _$CategoryImpl({required this.id, required this.name});
 
   factory _$CategoryImpl.fromJson(Map<String, dynamic> json) =>
       _$$CategoryImplFromJson(json);
@@ -214,31 +123,11 @@ class _$CategoryImpl implements _Category {
   @override
   final String id;
   @override
-  final String title;
-  @override
-  final String description;
-  @override
-  final String? imageUrl;
-  final List<String> _courseIds;
-  @override
-  @JsonKey()
-  List<String> get courseIds {
-    if (_courseIds is EqualUnmodifiableListView) return _courseIds;
-    // ignore: implicit_dynamic_type
-    return EqualUnmodifiableListView(_courseIds);
-  }
-
-  @override
-  @JsonKey()
-  final bool isPublished;
-  @override
-  final DateTime? createdAt;
-  @override
-  final DateTime? updatedAt;
+  final String name;
 
   @override
   String toString() {
-    return 'Category(id: $id, title: $title, description: $description, imageUrl: $imageUrl, courseIds: $courseIds, isPublished: $isPublished, createdAt: $createdAt, updatedAt: $updatedAt)';
+    return 'Category(id: $id, name: $name)';
   }
 
   @override
@@ -247,33 +136,12 @@ class _$CategoryImpl implements _Category {
         (other.runtimeType == runtimeType &&
             other is _$CategoryImpl &&
             (identical(other.id, id) || other.id == id) &&
-            (identical(other.title, title) || other.title == title) &&
-            (identical(other.description, description) ||
-                other.description == description) &&
-            (identical(other.imageUrl, imageUrl) ||
-                other.imageUrl == imageUrl) &&
-            const DeepCollectionEquality()
-                .equals(other._courseIds, _courseIds) &&
-            (identical(other.isPublished, isPublished) ||
-                other.isPublished == isPublished) &&
-            (identical(other.createdAt, createdAt) ||
-                other.createdAt == createdAt) &&
-            (identical(other.updatedAt, updatedAt) ||
-                other.updatedAt == updatedAt));
+            (identical(other.name, name) || other.name == name));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(
-      runtimeType,
-      id,
-      title,
-      description,
-      imageUrl,
-      const DeepCollectionEquality().hash(_courseIds),
-      isPublished,
-      createdAt,
-      updatedAt);
+  int get hashCode => Object.hash(runtimeType, id, name);
 
   /// Create a copy of Category
   /// with the given fields replaced by the non-null parameter values.
@@ -293,14 +161,7 @@ class _$CategoryImpl implements _Category {
 
 abstract class _Category implements Category {
   const factory _Category(
-      {required final String id,
-      required final String title,
-      required final String description,
-      final String? imageUrl,
-      final List<String> courseIds,
-      final bool isPublished,
-      final DateTime? createdAt,
-      final DateTime? updatedAt}) = _$CategoryImpl;
+      {required final String id, required final String name}) = _$CategoryImpl;
 
   factory _Category.fromJson(Map<String, dynamic> json) =
       _$CategoryImpl.fromJson;
@@ -308,19 +169,7 @@ abstract class _Category implements Category {
   @override
   String get id;
   @override
-  String get title;
-  @override
-  String get description;
-  @override
-  String? get imageUrl;
-  @override
-  List<String> get courseIds;
-  @override
-  bool get isPublished;
-  @override
-  DateTime? get createdAt;
-  @override
-  DateTime? get updatedAt;
+  String get name;
 
   /// Create a copy of Category
   /// with the given fields replaced by the non-null parameter values.

@@ -9,10 +9,12 @@ part 'user.g.dart';
 class AppUser with _$AppUser {
   const factory AppUser({
     required int id,
+    String? firebaseId,
     required String firstName,
     String? lastName,
     String? username,
     String? languageCode,
+    String? photoUrl,
     @Default(false) bool isAdmin,
     @Default({}) Map<String, dynamic> settings,
     required DateTime createdAt,
@@ -22,14 +24,15 @@ class AppUser with _$AppUser {
   factory AppUser.fromJson(Map<String, dynamic> json) => _$AppUserFromJson(json);
 
   static AppUser fromTelegramData(WebAppUser user) {
-    final username = user.username;
     return AppUser(
       id: user.id,
+      firebaseId: user.id.toString(),
       firstName: user.firstName ?? '',
       lastName: user.lastName,
-      username: username,
+      username: user.username,
       languageCode: user.languageCode,
-      isAdmin: AdminConfig.isAdmin(username),
+      photoUrl: user.photoUrl,
+      isAdmin: AdminConfig.isAdmin(user.id),
       createdAt: DateTime.now(),
       updatedAt: DateTime.now(),
     );

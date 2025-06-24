@@ -1,4 +1,4 @@
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
@@ -7,6 +7,9 @@ import 'package:go_router/go_router.dart';
 import 'package:logger/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:miniapp/features/home/presentation/screens/home_screen.dart';
+import 'package:miniapp/features/auth/repositories/user_repository.dart';
+import 'package:miniapp/features/course/repositories/course_repository.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 
 final loggerProvider = Provider<Logger>((ref) {
   return Logger(
@@ -21,12 +24,16 @@ final loggerProvider = Provider<Logger>((ref) {
   );
 });
 
-final firebaseAuthProvider = Provider<FirebaseAuth>((ref) {
-  return FirebaseAuth.instance;
+final firebaseFirestoreProvider = Provider<FirebaseFirestore>((ref) {
+  return FirebaseFirestore.instance;
 });
 
-final firestoreProvider = Provider<FirebaseFirestore>((ref) {
-  return FirebaseFirestore.instance;
+final firebaseAuthProvider = Provider<firebase_auth.FirebaseAuth>((ref) {
+  return firebase_auth.FirebaseAuth.instance;
+});
+
+final firebaseStorageProvider = Provider<FirebaseStorage>((ref) {
+  return FirebaseStorage.instance;
 });
 
 final storageProvider = Provider<FirebaseStorage>((ref) {
@@ -48,6 +55,18 @@ final routerProvider = Provider<GoRouter>((ref) {
 });
 
 final themeModeProvider = StateProvider<ThemeMode>((ref) => ThemeMode.system);
+
+final firebaseFunctionsProvider = Provider<FirebaseFunctions>((ref) {
+  return FirebaseFunctions.instanceFor(region: 'us-central1');
+});
+
+final userRepositoryProvider = Provider<IUserRepository>((ref) {
+  return UserRepository(ref.watch(firebaseFirestoreProvider), ref);
+});
+
+final courseRepositoryProvider = Provider<ICourseRepository>((ref) {
+  return CourseRepository(ref.watch(firebaseFirestoreProvider));
+});
 
 Future<void> initializeDependencies() async {
   try {

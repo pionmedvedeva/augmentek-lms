@@ -1,122 +1,123 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:miniapp/providers/auth_provider.dart';
+import 'package:go_router/go_router.dart';
+import 'package:miniapp/features/admin/presentation/screens/course_management_screen.dart';
+import 'package:miniapp/features/admin/presentation/screens/user_list_screen.dart';
+import 'package:miniapp/features/admin/presentation/screens/homework_review_screen.dart';
+import 'package:miniapp/features/auth/providers/user_provider.dart';
+import 'package:miniapp/shared/widgets/debug_log_screen.dart';
 
-class AdminDashboard extends ConsumerWidget {
+class AdminDashboard extends ConsumerStatefulWidget {
   const AdminDashboard({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final authState = ref.watch(authProvider);
+  ConsumerState<AdminDashboard> createState() => _AdminDashboardState();
+}
+
+class _AdminDashboardState extends ConsumerState<AdminDashboard>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 3, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final user = ref.watch(userProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Панель администратора'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () => ref.read(authProvider.notifier).signOut(),
-          ),
-        ],
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Добро пожаловать, ${authState.username}!',
-              style: Theme.of(context).textTheme.headlineSmall,
+        title: const Text('Админ панель'),
+        centerTitle: true,
+        backgroundColor: Colors.deepPurple,
+        foregroundColor: Colors.white,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.go('/home'),
+          tooltip: 'Вернуться на главную',
+        ),
+        bottom: TabBar(
+          controller: _tabController,
+          indicatorColor: Colors.white,
+          labelColor: Colors.white,
+          unselectedLabelColor: Colors.white70,
+          tabs: const [
+            Tab(
+              icon: Icon(Icons.school),
+              text: 'Курсы',
             ),
-            const SizedBox(height: 24),
-            const Text(
-              'Управление курсами',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
+            Tab(
+              icon: Icon(Icons.people),
+              text: 'Пользователи',
             ),
-            const SizedBox(height: 16),
-            Expanded(
-              child: GridView.count(
-                crossAxisCount: 2,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
-                children: [
-                  _buildAdminCard(
-                    context,
-                    'Создать курс',
-                    Icons.add_circle,
-                    () {
-                      // TODO: Implement course creation
-                    },
-                  ),
-                  _buildAdminCard(
-                    context,
-                    'Управление пользователями',
-                    Icons.people,
-                    () {
-                      // TODO: Implement user management
-                    },
-                  ),
-                  _buildAdminCard(
-                    context,
-                    'Статистика',
-                    Icons.bar_chart,
-                    () {
-                      // TODO: Implement statistics
-                    },
-                  ),
-                  _buildAdminCard(
-                    context,
-                    'Настройки',
-                    Icons.settings,
-                    () {
-                      // TODO: Implement settings
-                    },
-                  ),
-                ],
-              ),
+            Tab(
+              icon: Icon(Icons.assignment),
+              text: 'Домашки',
             ),
           ],
         ),
       ),
-    );
-  }
+      body: user.when(
+        data: (appUser) {
+          if (appUser?.isAdmin != true) {
+            return const Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.lock,
+                    size: 64,
+                    color: Colors.grey,
+                  ),
+                  SizedBox(height: 16),
+                  Text(
+                    'Доступ запрещен',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    'У вас нет прав администратора',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                ],
+              ),
+            );
+          }
 
-  Widget _buildAdminCard(
-    BuildContext context,
-    String title,
-    IconData icon,
-    VoidCallback onTap,
-  ) {
-    return Card(
-      elevation: 4,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
+          return TabBarView(
+            controller: _tabController,
+            children: const [
+              CourseManagementScreen(),
+              UserListScreen(),
+              HomeworkReviewScreen(),
+            ],
+          );
+        },
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (error, stack) => Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                icon,
-                size: 48,
-                color: Theme.of(context).primaryColor,
-              ),
+              const Icon(Icons.error, size: 64, color: Colors.red),
               const SizedBox(height: 16),
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-                textAlign: TextAlign.center,
-              ),
+              Text('Ошибка: $error'),
             ],
           ),
         ),
       ),
+      floatingActionButton: const DebugToggleButton(),
     );
   }
 } 

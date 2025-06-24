@@ -1,3 +1,5 @@
+import 'dart:math';
+
 class StringUtils {
   static String capitalize(String text) {
     if (text.isEmpty) return text;

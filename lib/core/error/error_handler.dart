@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:logger/logger.dart';
 import '../config/env.dart';
 import '../di/di.dart';
 
@@ -114,7 +113,7 @@ class ErrorHandler {
     StackTrace? stackTrace,
   ) {
     final logger = ProviderContainer().read(loggerProvider);
-    logger.e('Error occurred', error, stackTrace);
+    logger.e('Error occurred: $error', stackTrace: stackTrace);
 
     String message;
     if (error is AppError) {

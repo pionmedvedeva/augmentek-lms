@@ -1,18 +1,86 @@
-rules_version='2'
+rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /{document=**} {
-      // This rule allows anyone with your database reference to view, edit,
-      // and delete all data in your database. It is useful for getting
-      // started, but it is configured to expire after 30 days because it
-      // leaves your app open to attackers. At that time, all client
-      // requests to your database will be denied.
-      //
-      // Make sure to write security rules for your app before that time, or
-      // else all client requests to your database will be denied until you
-      // update your rules.
-      allow read, write: if request.time < timestamp.date(2025, 7, 17);
+
+    // Users can only read, create, and update their own user document.
+    // Deleting user documents from the client is not allowed.
+    match /users/{userId} {
+      // A user can get their own document if they are authenticated
+      // We allow access to any user document for authenticated users since we use Telegram ID as document key
+      allow get: if request.auth != null;
+
+      // An admin can list all user documents.
+      allow list: if request.auth != null;
+
+      // A user can create and update any document if they are authenticated
+      // We rely on our application logic to ensure users only modify their own data
+      allow create, update: if request.auth != null;
+
+      // Deleting user documents from the client is not allowed.
+      allow delete: if false;
+    }
+    
+    // Правила для коллекции админов
+    match /admins/{adminId} {
+      // Пользователь может создать свой собственный документ админа
+      allow create: if request.auth != null && request.auth.uid == adminId;
+      // Админы могут читать документы в коллекции admins
+      allow read: if request.auth != null;
+      // Запрещаем обновление и удаление из клиента
+      allow update, delete: if false;
+    }
+
+    // Правила для курсов
+    match /courses/{courseId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && isAdmin();
+    }
+    
+    // Правила для разделов
+    match /sections/{sectionId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && isAdmin();
+    }
+    
+    // Правила для уроков
+    match /lessons/{lessonId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && isAdmin();
+    }
+    
+    // Правила для прогресса пользователей
+    match /users/{userId}/progress/{progressId} {
+      allow read, write: if request.auth != null && 
+        (request.auth.uid == userId || isAdmin());
+    }
+    
+    // Правила для категорий
+    match /categories/{categoryId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && isAdmin();
+    }
+    
+    // Правила для домашних заданий
+    match /homework_submissions/{submissionId} {
+      // Любой аутентифицированный пользователь может создавать домашние задания
+      allow create: if request.auth != null;
+      
+      // Любой аутентифицированный пользователь может читать домашние задания
+      allow read: if request.auth != null;
+      
+      // Только админы могут обновлять домашние задания (для проверки)
+      allow update: if request.auth != null && isAdmin();
+      
+      // Никто не может удалять домашние задания
+      allow delete: if false;
+    }
+    
+    // Функция проверки администратора
+    // Проверяем, является ли пользователь админом через специальную коллекцию admins
+    function isAdmin() {
+      return request.auth != null && 
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid));
     }
   }
 }

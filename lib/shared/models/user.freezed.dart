@@ -20,15 +20,17 @@ AppUser _$AppUserFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$AppUser {
-  String get id => throw _privateConstructorUsedError;
+  int get id => throw _privateConstructorUsedError;
+  String? get firebaseId => throw _privateConstructorUsedError;
   String get firstName => throw _privateConstructorUsedError;
   String? get lastName => throw _privateConstructorUsedError;
   String? get username => throw _privateConstructorUsedError;
   String? get languageCode => throw _privateConstructorUsedError;
+  String? get photoUrl => throw _privateConstructorUsedError;
   bool get isAdmin => throw _privateConstructorUsedError;
   Map<String, dynamic> get settings => throw _privateConstructorUsedError;
-  DateTime? get createdAt => throw _privateConstructorUsedError;
-  DateTime? get updatedAt => throw _privateConstructorUsedError;
+  DateTime get createdAt => throw _privateConstructorUsedError;
+  DateTime get updatedAt => throw _privateConstructorUsedError;
 
   /// Serializes this AppUser to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -45,15 +47,17 @@ abstract class $AppUserCopyWith<$Res> {
       _$AppUserCopyWithImpl<$Res, AppUser>;
   @useResult
   $Res call(
-      {String id,
+      {int id,
+      String? firebaseId,
       String firstName,
       String? lastName,
       String? username,
       String? languageCode,
+      String? photoUrl,
       bool isAdmin,
       Map<String, dynamic> settings,
-      DateTime? createdAt,
-      DateTime? updatedAt});
+      DateTime createdAt,
+      DateTime updatedAt});
 }
 
 /// @nodoc
@@ -72,20 +76,26 @@ class _$AppUserCopyWithImpl<$Res, $Val extends AppUser>
   @override
   $Res call({
     Object? id = null,
+    Object? firebaseId = freezed,
     Object? firstName = null,
     Object? lastName = freezed,
     Object? username = freezed,
     Object? languageCode = freezed,
+    Object? photoUrl = freezed,
     Object? isAdmin = null,
     Object? settings = null,
-    Object? createdAt = freezed,
-    Object? updatedAt = freezed,
+    Object? createdAt = null,
+    Object? updatedAt = null,
   }) {
     return _then(_value.copyWith(
       id: null == id
           ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
-              as String,
+              as int,
+      firebaseId: freezed == firebaseId
+          ? _value.firebaseId
+          : firebaseId // ignore: cast_nullable_to_non_nullable
+              as String?,
       firstName: null == firstName
           ? _value.firstName
           : firstName // ignore: cast_nullable_to_non_nullable
@@ -102,6 +112,10 @@ class _$AppUserCopyWithImpl<$Res, $Val extends AppUser>
           ? _value.languageCode
           : languageCode // ignore: cast_nullable_to_non_nullable
               as String?,
+      photoUrl: freezed == photoUrl
+          ? _value.photoUrl
+          : photoUrl // ignore: cast_nullable_to_non_nullable
+              as String?,
       isAdmin: null == isAdmin
           ? _value.isAdmin
           : isAdmin // ignore: cast_nullable_to_non_nullable
@@ -110,14 +124,14 @@ class _$AppUserCopyWithImpl<$Res, $Val extends AppUser>
           ? _value.settings
           : settings // ignore: cast_nullable_to_non_nullable
               as Map<String, dynamic>,
-      createdAt: freezed == createdAt
+      createdAt: null == createdAt
           ? _value.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
-              as DateTime?,
-      updatedAt: freezed == updatedAt
+              as DateTime,
+      updatedAt: null == updatedAt
           ? _value.updatedAt
           : updatedAt // ignore: cast_nullable_to_non_nullable
-              as DateTime?,
+              as DateTime,
     ) as $Val);
   }
 }
@@ -130,15 +144,17 @@ abstract class _$$AppUserImplCopyWith<$Res> implements $AppUserCopyWith<$Res> {
   @override
   @useResult
   $Res call(
-      {String id,
+      {int id,
+      String? firebaseId,
       String firstName,
       String? lastName,
       String? username,
       String? languageCode,
+      String? photoUrl,
       bool isAdmin,
       Map<String, dynamic> settings,
-      DateTime? createdAt,
-      DateTime? updatedAt});
+      DateTime createdAt,
+      DateTime updatedAt});
 }
 
 /// @nodoc
@@ -155,20 +171,26 @@ class __$$AppUserImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? id = null,
+    Object? firebaseId = freezed,
     Object? firstName = null,
     Object? lastName = freezed,
     Object? username = freezed,
     Object? languageCode = freezed,
+    Object? photoUrl = freezed,
     Object? isAdmin = null,
     Object? settings = null,
-    Object? createdAt = freezed,
-    Object? updatedAt = freezed,
+    Object? createdAt = null,
+    Object? updatedAt = null,
   }) {
     return _then(_$AppUserImpl(
       id: null == id
           ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
-              as String,
+              as int,
+      firebaseId: freezed == firebaseId
+          ? _value.firebaseId
+          : firebaseId // ignore: cast_nullable_to_non_nullable
+              as String?,
       firstName: null == firstName
           ? _value.firstName
           : firstName // ignore: cast_nullable_to_non_nullable
@@ -185,6 +207,10 @@ class __$$AppUserImplCopyWithImpl<$Res>
           ? _value.languageCode
           : languageCode // ignore: cast_nullable_to_non_nullable
               as String?,
+      photoUrl: freezed == photoUrl
+          ? _value.photoUrl
+          : photoUrl // ignore: cast_nullable_to_non_nullable
+              as String?,
       isAdmin: null == isAdmin
           ? _value.isAdmin
           : isAdmin // ignore: cast_nullable_to_non_nullable
@@ -193,14 +219,14 @@ class __$$AppUserImplCopyWithImpl<$Res>
           ? _value._settings
           : settings // ignore: cast_nullable_to_non_nullable
               as Map<String, dynamic>,
-      createdAt: freezed == createdAt
+      createdAt: null == createdAt
           ? _value.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
-              as DateTime?,
-      updatedAt: freezed == updatedAt
+              as DateTime,
+      updatedAt: null == updatedAt
           ? _value.updatedAt
           : updatedAt // ignore: cast_nullable_to_non_nullable
-              as DateTime?,
+              as DateTime,
     ));
   }
 }
@@ -210,21 +236,25 @@ class __$$AppUserImplCopyWithImpl<$Res>
 class _$AppUserImpl implements _AppUser {
   const _$AppUserImpl(
       {required this.id,
+      this.firebaseId,
       required this.firstName,
       this.lastName,
       this.username,
       this.languageCode,
+      this.photoUrl,
       this.isAdmin = false,
       final Map<String, dynamic> settings = const {},
-      this.createdAt,
-      this.updatedAt})
+      required this.createdAt,
+      required this.updatedAt})
       : _settings = settings;
 
   factory _$AppUserImpl.fromJson(Map<String, dynamic> json) =>
       _$$AppUserImplFromJson(json);
 
   @override
-  final String id;
+  final int id;
+  @override
+  final String? firebaseId;
   @override
   final String firstName;
   @override
@@ -233,6 +263,8 @@ class _$AppUserImpl implements _AppUser {
   final String? username;
   @override
   final String? languageCode;
+  @override
+  final String? photoUrl;
   @override
   @JsonKey()
   final bool isAdmin;
@@ -246,13 +278,13 @@ class _$AppUserImpl implements _AppUser {
   }
 
   @override
-  final DateTime? createdAt;
+  final DateTime createdAt;
   @override
-  final DateTime? updatedAt;
+  final DateTime updatedAt;
 
   @override
   String toString() {
-    return 'AppUser(id: $id, firstName: $firstName, lastName: $lastName, username: $username, languageCode: $languageCode, isAdmin: $isAdmin, settings: $settings, createdAt: $createdAt, updatedAt: $updatedAt)';
+    return 'AppUser(id: $id, firebaseId: $firebaseId, firstName: $firstName, lastName: $lastName, username: $username, languageCode: $languageCode, photoUrl: $photoUrl, isAdmin: $isAdmin, settings: $settings, createdAt: $createdAt, updatedAt: $updatedAt)';
   }
 
   @override
@@ -261,6 +293,8 @@ class _$AppUserImpl implements _AppUser {
         (other.runtimeType == runtimeType &&
             other is _$AppUserImpl &&
             (identical(other.id, id) || other.id == id) &&
+            (identical(other.firebaseId, firebaseId) ||
+                other.firebaseId == firebaseId) &&
             (identical(other.firstName, firstName) ||
                 other.firstName == firstName) &&
             (identical(other.lastName, lastName) ||
@@ -269,6 +303,8 @@ class _$AppUserImpl implements _AppUser {
                 other.username == username) &&
             (identical(other.languageCode, languageCode) ||
                 other.languageCode == languageCode) &&
+            (identical(other.photoUrl, photoUrl) ||
+                other.photoUrl == photoUrl) &&
             (identical(other.isAdmin, isAdmin) || other.isAdmin == isAdmin) &&
             const DeepCollectionEquality().equals(other._settings, _settings) &&
             (identical(other.createdAt, createdAt) ||
@@ -282,10 +318,12 @@ class _$AppUserImpl implements _AppUser {
   int get hashCode => Object.hash(
       runtimeType,
       id,
+      firebaseId,
       firstName,
       lastName,
       username,
       languageCode,
+      photoUrl,
       isAdmin,
       const DeepCollectionEquality().hash(_settings),
       createdAt,
@@ -309,20 +347,24 @@ class _$AppUserImpl implements _AppUser {
 
 abstract class _AppUser implements AppUser {
   const factory _AppUser(
-      {required final String id,
+      {required final int id,
+      final String? firebaseId,
       required final String firstName,
       final String? lastName,
       final String? username,
       final String? languageCode,
+      final String? photoUrl,
       final bool isAdmin,
       final Map<String, dynamic> settings,
-      final DateTime? createdAt,
-      final DateTime? updatedAt}) = _$AppUserImpl;
+      required final DateTime createdAt,
+      required final DateTime updatedAt}) = _$AppUserImpl;
 
   factory _AppUser.fromJson(Map<String, dynamic> json) = _$AppUserImpl.fromJson;
 
   @override
-  String get id;
+  int get id;
+  @override
+  String? get firebaseId;
   @override
   String get firstName;
   @override
@@ -332,13 +374,15 @@ abstract class _AppUser implements AppUser {
   @override
   String? get languageCode;
   @override
+  String? get photoUrl;
+  @override
   bool get isAdmin;
   @override
   Map<String, dynamic> get settings;
   @override
-  DateTime? get createdAt;
+  DateTime get createdAt;
   @override
-  DateTime? get updatedAt;
+  DateTime get updatedAt;
 
   /// Create a copy of AppUser
   /// with the given fields replaced by the non-null parameter values.

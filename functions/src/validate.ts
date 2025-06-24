@@ -2,7 +2,12 @@ import * as querystring from 'querystring';
 import * as crypto from 'crypto';
 
 export function checkWebAppSignature(initData: string, secretKeyHex: string): false | number {
-    const parsedData = convertParsedData(querystring.parse(initData));
+    console.log('Raw initData received:', initData);
+    const parsed = querystring.parse(initData);
+    console.log('Parsed by querystring:', JSON.stringify(parsed, null, 2));
+    
+    const parsedData = convertParsedData(parsed);
+    console.log('Converted parsed data:', JSON.stringify(parsedData, null, 2));
     if (!parsedData) return false;
 
     const { hash, ...rest } = parsedData;
@@ -13,8 +18,33 @@ export function checkWebAppSignature(initData: string, secretKeyHex: string): fa
         .map(([key, value]) => `${key}=${value}`)
         .join('\n');
 
-    const uid = JSON.parse(rest['user'])['id'];
-    console.log(dataCheckString);
+    console.log('DataCheckString:', dataCheckString);
+    console.log('User field:', rest['user']);
+
+    // Безопасно парсим user данные
+    let uid: number;
+    try {
+        if (!rest['user']) {
+            console.error('User field is missing from initData');
+            return false;
+        }
+        const userStr = rest['user'];
+        if (userStr === 'undefined' || userStr === 'null') {
+            console.error('User field is undefined or null');
+            return false;
+        }
+        const userData = JSON.parse(userStr);
+        uid = userData['id'];
+        if (!uid) {
+            console.error('User ID is missing from user data');
+            return false;
+        }
+        console.log('Extracted user ID:', uid);
+    } catch (error) {
+        console.error('Error parsing user data:', error);
+        console.error('User field value:', rest['user']);
+        return false;
+    }
 
     const secretKey = Buffer.from(secretKeyHex, 'hex');
     const calculatedHash = crypto.createHmac('sha256', secretKey)
