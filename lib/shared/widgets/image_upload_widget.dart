@@ -2,6 +2,7 @@ import 'dart:typed_data';
 import 'dart:html' as html;
 import 'package:flutter/material.dart';
 import 'package:dotted_border/dotted_border.dart';
+import '../../core/utils/app_logger.dart';
 
 class ImageUploadWidget extends StatefulWidget {
   final String? initialImageUrl;
@@ -247,7 +248,7 @@ class _ImageUploadWidgetState extends State<ImageUploadWidget> {
     setState(() => _isLoading = true);
     
     try {
-      print('ImageUpload: Creating file input...');
+      AppLogger.info('Creating file input for image upload');
       
       // Создаем HTML input элемент
       final html.InputElement input = html.InputElement(type: 'file');
@@ -259,7 +260,7 @@ class _ImageUploadWidgetState extends State<ImageUploadWidget> {
         if (files != null && files.isNotEmpty) {
           final file = files[0];
           
-          print('ImageUpload: File selected: ${file.name}, size: ${file.size}');
+          AppLogger.info('File selected: ${file.name}, size: ${file.size}');
           
           // Проверяем размер файла (5 МБ максимум)
           if (file.size > 5 * 1024 * 1024) {
@@ -291,9 +292,9 @@ class _ImageUploadWidgetState extends State<ImageUploadWidget> {
                   _isLoading = false;
                 });
                 
-                print('ImageUpload: Calling onImageSelected callback...');
+                AppLogger.info('Calling onImageSelected callback');
                 widget.onImageSelected(bytes, file.name);
-                print('ImageUpload: Image selection completed successfully');
+                AppLogger.info('Image selection completed successfully');
               } else {
                 _showError('Не удалось прочитать файл');
                 setState(() => _isLoading = false);
@@ -306,7 +307,7 @@ class _ImageUploadWidgetState extends State<ImageUploadWidget> {
             });
             
           } catch (e) {
-            print('ImageUpload: Error reading file: $e');
+            AppLogger.error('Error reading file: $e');
             _showError('Ошибка чтения файла: $e');
             setState(() => _isLoading = false);
           }
@@ -319,7 +320,7 @@ class _ImageUploadWidgetState extends State<ImageUploadWidget> {
       input.click();
       
     } catch (e) {
-      print('ImageUpload: Error creating input: $e');
+      AppLogger.error('Error creating input: $e');
       _showError('Ошибка выбора файла: $e');
       setState(() => _isLoading = false);
     }

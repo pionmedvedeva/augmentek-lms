@@ -113,7 +113,7 @@ class _AdminDashboardState extends ConsumerState<AdminDashboard>
           ),
         ),
       ),
-      floatingActionButton: const DebugToggleButton(),
+
     );
   }
 } 

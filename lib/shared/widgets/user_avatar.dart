@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/utils/app_logger.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
@@ -55,7 +56,7 @@ class UserAvatar extends StatelessWidget {
       placeholderBuilder: (context) => _buildLoadingIndicator(),
       // В случае ошибки SVG показываем инициалы
       errorBuilder: (context, error, stackTrace) {
-        print('SVG Avatar loading error: $error');
+        AppLogger.warning('SVG Avatar loading error: $error');
         return _buildInitialsAvatar(fallbackColor, fallbackTextStyle);
       },
     );
@@ -69,7 +70,7 @@ class UserAvatar extends StatelessWidget {
       fit: BoxFit.cover,
       placeholder: (context, url) => _buildLoadingIndicator(),
       errorWidget: (context, url, error) {
-        print('Network Avatar loading error: $error');
+        AppLogger.warning('Network Avatar loading error: $error');
         return _buildInitialsAvatar(fallbackColor, fallbackTextStyle);
       },
     );

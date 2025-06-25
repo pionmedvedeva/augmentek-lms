@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 import 'package:firebase_storage/firebase_storage.dart';
+import '../core/utils/app_logger.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as path;
@@ -42,7 +43,7 @@ class StorageService {
         contentType = 'image/webp';
       }
       
-      print('Storage Service: Starting upload of $uniqueFileName');
+      AppLogger.info('Starting upload of $uniqueFileName');
       
       // Загружаем файл
       final uploadTask = ref.putData(
@@ -62,11 +63,11 @@ class StorageService {
       // Получаем URL
       final downloadUrl = await snapshot.ref.getDownloadURL();
       
-      print('Storage Service: Upload successful, URL: $downloadUrl');
+      AppLogger.info('Upload successful, URL: $downloadUrl');
       return downloadUrl;
       
     } catch (e) {
-      print('Storage Service Error: $e');
+      AppLogger.error('Storage Service Error: $e');
       rethrow;
     }
   }
@@ -76,10 +77,10 @@ class StorageService {
     try {
       final ref = _storageInstance.refFromURL(imageUrl);
       await ref.delete();
-      print('Storage Service: Image deleted successfully');
+      AppLogger.info('Image deleted successfully');
     } catch (e) {
       // Не выбрасываем ошибку если файл не найден
-      print('Storage Service: Failed to delete image: $e');
+      AppLogger.warning('Failed to delete image: $e');
     }
   }
 }

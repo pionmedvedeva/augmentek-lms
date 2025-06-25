@@ -75,7 +75,7 @@ Future<void> initializeDependencies() async {
     container.read(sharedPreferencesProvider.notifier).state = prefs;
     Logger().i('Dependencies initialized successfully');
   } catch (e) {
-    print('Error initializing dependencies: $e');
+    Logger().e('Error initializing dependencies: $e');
     rethrow;
   }
 }

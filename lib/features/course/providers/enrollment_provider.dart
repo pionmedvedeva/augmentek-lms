@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:miniapp/features/auth/providers/user_provider.dart';
+import '../../../core/utils/app_logger.dart';
 
 import 'package:miniapp/shared/models/course.dart';
 import 'package:miniapp/features/course/providers/course_provider.dart';
@@ -126,7 +127,7 @@ class EnrollmentNotifier extends StateNotifier<AsyncValue<void>> {
       _ref.read(userProvider.notifier).setUser(updatedUser);
     } catch (error) {
       // Логгируем ошибку, но не меняем state - это не критично
-      print('Error updating course progress: $error');
+      AppLogger.warning('Error updating course progress: $error');
     }
   }
 
@@ -155,7 +156,7 @@ class EnrollmentNotifier extends StateNotifier<AsyncValue<void>> {
       // Обновляем провайдер пользователя
       _ref.read(userProvider.notifier).setUser(updatedUser);
     } catch (error) {
-      print('Error updating last accessed: $error');
+      AppLogger.warning('Error updating last accessed: $error');
     }
   }
 }

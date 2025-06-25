@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:miniapp/core/config/firebase_options.dart';
 import 'package:miniapp/core/theme/app_theme.dart';
 import 'package:miniapp/core/di/di.dart';
+import 'package:miniapp/core/utils/app_logger.dart';
+import 'package:miniapp/core/utils/remote_logger.dart';
 import 'package:miniapp/features/auth/providers/auth_provider.dart';
 import 'package:miniapp/features/auth/providers/user_provider.dart';
 import 'package:miniapp/features/home/presentation/screens/home_screen.dart';
@@ -17,9 +20,15 @@ import 'package:miniapp/shared/widgets/debug_log_screen.dart';
 import 'package:url_strategy/url_strategy.dart';
 import 'package:telegram_web_app/telegram_web_app.dart';
 
+// Глобальная ссылка на ProviderContainer для логирования
+late final ProviderContainer _globalContainer;
+
 Future<void> main() async {
   setPathUrlStrategy();
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Создаем глобальный container
+  _globalContainer = ProviderContainer();
   
   try {
     await Firebase.initializeApp(
@@ -32,12 +41,19 @@ Future<void> main() async {
     // Initialize dependencies
     await initializeDependencies();
     
-    runApp(const ProviderScope(child: MyApp()));
+    // Инициализируем логгеры ПОСЛЕ создания контейнера
+    RemoteLogger.initialize();
+    
+    runApp(ProviderScope(
+      parent: _globalContainer,
+      child: const AppInitializerWrapper(),
+    ));
   } catch (e, stack) {
-    print('Error initializing app: $e');
-    print('Stack trace: $stack');
     // Still run the app even if initialization fails
-    runApp(const ProviderScope(child: MyApp()));
+    runApp(ProviderScope(
+      parent: _globalContainer,
+      child: const AppInitializerWrapper(),
+    ));
   }
 }
 
@@ -55,10 +71,10 @@ void _initializeTelegramWebApp() {
     // Показываем, что приложение готово
     webApp.ready();
     
-    print('Telegram WebApp initialized in fullsize mode');
-    print('Viewport height: ${webApp.viewportHeight}');
+    AppLogger.info('Telegram WebApp initialized in fullsize mode');
+    AppLogger.info('Viewport height: ${webApp.viewportHeight}');
   } catch (e) {
-    print('Error initializing Telegram WebApp: $e');
+    AppLogger.error('Error initializing Telegram WebApp: $e');
   }
 }
 
@@ -144,9 +160,18 @@ class _AuthWrapperState extends ConsumerState<AuthWrapper> {
     final authState = ref.watch(authStateProvider);
     final userState = ref.watch(userProvider);
 
-    // Определяем, показывать ли debug логи (только в Telegram)
+    // Определяем, показывать ли debug логи
     final webApp = TelegramWebApp.instance;
     final isInTelegram = webApp.initDataUnsafe?.user != null;
+    
+    // В debug режиме всегда показываем debug панель, в релизе - только в Telegram
+    bool shouldShowDebugPanel;
+    try {
+      shouldShowDebugPanel = kDebugMode || isInTelegram;
+    } catch (e) {
+      // Fallback если возникла ошибка с TelegramWebApp
+      shouldShowDebugPanel = kDebugMode;
+    }
 
     Widget mainContent;
 
@@ -231,8 +256,8 @@ class _AuthWrapperState extends ConsumerState<AuthWrapper> {
       }
     }
 
-    // Wrap with debug screen if in Telegram
-    if (isInTelegram) {
+    // Wrap with debug screen if needed
+    if (shouldShowDebugPanel) {
       return DebugLogScreen(
         child: mainContent,
         showLogs: true,
@@ -240,6 +265,30 @@ class _AuthWrapperState extends ConsumerState<AuthWrapper> {
     } else {
       return mainContent;
     }
+  }
+}
+
+class AppInitializerWrapper extends ConsumerStatefulWidget {
+  const AppInitializerWrapper({super.key});
+
+  @override
+  ConsumerState<AppInitializerWrapper> createState() => _AppInitializerWrapperState();
+}
+
+class _AppInitializerWrapperState extends ConsumerState<AppInitializerWrapper> {
+  @override
+  void initState() {
+    super.initState();
+    // Инициализируем AppLogger ПОСЛЕ того как ProviderScope готов
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      AppLogger.initialize(_globalContainer);
+      AppLogger.info('Application started successfully');
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return const MyApp();
   }
 }
 

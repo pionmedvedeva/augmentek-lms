@@ -26,9 +26,9 @@ flutter pub get
 echo "Генерация кода..."
 flutter pub run build_runner build --delete-conflicting-outputs
 
-# Собираем веб-версию
-echo "Сборка веб-версии..."
-flutter build web
+# Собираем веб-версию БЕЗ tree shaking (решает проблемы с иконками)
+echo "Сборка веб-версии без tree shaking..."
+flutter build web --no-tree-shake-icons
 
 # Проверяем, залогинен ли пользователь в Firebase
 if ! firebase login:list &> /dev/null; then
@@ -41,4 +41,11 @@ echo "Деплой на Firebase Hosting..."
 firebase deploy --only hosting
 
 echo "Установка завершена!"
-echo "URL вашего приложения будет показан после деплоя." 
+echo "URL вашего приложения будет показан после деплоя."
+echo ""
+echo "💡 Доступные команды для сборки:"
+echo "  ./scripts/build_web.sh           - сборка без tree shaking"
+echo "  ./scripts/build_web.sh debug     - debug сборка"
+echo "  ./scripts/deploy_firebase.sh     - деплой в Firebase"
+echo ""
+echo "🔧 Эти скрипты автоматически отключают tree shaking для стабильной сборки." 

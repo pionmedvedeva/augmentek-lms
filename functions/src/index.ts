@@ -7,3 +7,6 @@ export * from "./auth";
 
 // Export Telegram bot functions
 export * from "./bot-trigger";
+
+// Export logging functions for error handling
+export * from "./logging";

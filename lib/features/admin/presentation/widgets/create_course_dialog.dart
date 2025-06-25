@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:miniapp/shared/models/course.dart';
 import 'package:miniapp/shared/widgets/image_upload_widget.dart';
 import 'package:miniapp/services/storage_service.dart';
+import '../../../../core/utils/app_logger.dart';
 
 class CreateCourseDialog extends ConsumerStatefulWidget {
   final Course? course;
@@ -192,26 +193,26 @@ class _CreateCourseDialogState extends ConsumerState<CreateCourseDialog> {
 
       // Загружаем новое изображение если выбрано
       if (_selectedImageBytes != null && _selectedImageFileName != null) {
-        print('Dialog: Starting image upload process...');
+        AppLogger.info('Starting image upload process', ref);
         
         // Убеждаемся что Firebase инициализирован
         await Future.delayed(const Duration(milliseconds: 200));
         
         final courseId = widget.course?.id ?? DateTime.now().millisecondsSinceEpoch.toString();
-        print('Dialog: Course ID for upload: $courseId');
-        print('Dialog: Image file name: $_selectedImageFileName');
-        print('Dialog: Image size: ${_selectedImageBytes!.length} bytes');
+        AppLogger.info('Course ID for upload: $courseId', ref);
+        AppLogger.info('Image file name: $_selectedImageFileName', ref);
+        AppLogger.info('Image size: ${_selectedImageBytes!.length} bytes', ref);
         
         try {
-          print('Dialog: Calling storage service...');
+          AppLogger.info('Calling storage service', ref);
           finalImageUrl = await ref.read(storageServiceProvider).uploadCourseImage(
             courseId: courseId,
             imageBytes: _selectedImageBytes!,
             fileName: _selectedImageFileName!,
           );
-          print('Dialog: Image upload successful, URL: $finalImageUrl');
+          AppLogger.info('Image upload successful, URL: $finalImageUrl', ref);
         } catch (storageError) {
-          print('Dialog: Storage error occurred: $storageError');
+          AppLogger.error('Storage error occurred: $storageError', ref);
           // Показываем конкретную ошибку Storage
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -226,7 +227,7 @@ class _CreateCourseDialogState extends ConsumerState<CreateCourseDialog> {
         }
       }
 
-      print('Dialog: Creating course object...');
+      AppLogger.info('Creating course object', ref);
 
       // Удаляем старое изображение если нужно
       if (_imageRemoved && widget.course?.imageUrl != null) {
@@ -234,7 +235,7 @@ class _CreateCourseDialogState extends ConsumerState<CreateCourseDialog> {
           await ref.read(storageServiceProvider).deleteCourseImage(widget.course!.imageUrl!);
         } catch (e) {
           // Логируем ошибку, но не прерываем процесс
-          print('Не удалось удалить старое изображение: $e');
+          AppLogger.warning('Не удалось удалить старое изображение: $e', ref);
         }
         finalImageUrl = null;
       }
@@ -258,14 +259,14 @@ class _CreateCourseDialogState extends ConsumerState<CreateCourseDialog> {
         updatedAt: DateTime.now(),
       );
 
-      print('Dialog: Calling onCourseCreated...');
+      AppLogger.info('Calling onCourseCreated callback', ref);
       widget.onCourseCreated(course);
       
       if (mounted) {
         Navigator.of(context).pop();
       }
     } catch (e) {
-      print('Dialog: General error occurred: $e');
+      AppLogger.error('General error occurred: $e', ref);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

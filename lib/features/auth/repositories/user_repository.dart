@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:miniapp/shared/models/user.dart';
+import '../../../core/utils/app_logger.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:miniapp/shared/widgets/debug_log_screen.dart';
 import 'package:miniapp/core/di/di.dart';
@@ -69,7 +70,7 @@ class UserRepository implements IUserRepository {
       return user;
     } catch (e) {
       _ref.read(debugLogsProvider.notifier).addLog('❌ Firestore query error: $e');
-      print(e);
+      AppLogger.error('Firestore query error for user $userId: $e');
       // НЕ возвращаем null, а выбрасываем исключение, чтобы увидеть проблему
       rethrow;
     }
@@ -89,7 +90,7 @@ class UserRepository implements IUserRepository {
       return user;
     } catch (e) {
       _ref.read(debugLogsProvider.notifier).addLog('❌ Firestore query by Firebase UID error: $e');
-      print(e);
+      AppLogger.error('Firestore query by Firebase UID error: $e');
       return null;
     }
   }
@@ -113,7 +114,7 @@ class UserRepository implements IUserRepository {
       }
     } catch (e) {
       _ref.read(debugLogsProvider.notifier).addLog('❌ Create user error: $e');
-      print(e);
+      AppLogger.error('Create user error: $e');
     }
   }
 
@@ -125,7 +126,7 @@ class UserRepository implements IUserRepository {
       _ref.read(debugLogsProvider.notifier).addLog('✅ User created successfully with Firebase UID');
     } catch (e) {
       _ref.read(debugLogsProvider.notifier).addLog('❌ Create user with Firebase UID error: $e');
-      print(e);
+      AppLogger.error('Create user with Firebase UID error: $e');
     }
   }
 
@@ -138,7 +139,7 @@ class UserRepository implements IUserRepository {
       _ref.read(debugLogsProvider.notifier).addLog('✅ User updated successfully in Firestore');
     } catch (e) {
       _ref.read(debugLogsProvider.notifier).addLog('❌ Update user error: $e');
-      print(e);
+      AppLogger.error('Update user error: $e');
     }
   }
 
@@ -148,8 +149,7 @@ class UserRepository implements IUserRepository {
       final snapshot = await _usersCollection.get();
       return snapshot.docs.map((doc) => doc.data()).toList();
     } catch (e) {
-      // TODO: Add logging
-      print(e);
+      AppLogger.error('Get users error: $e');
       return [];
     }
   }
