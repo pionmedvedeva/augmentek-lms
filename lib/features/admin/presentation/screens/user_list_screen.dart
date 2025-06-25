@@ -5,6 +5,7 @@ import 'package:miniapp/features/admin/presentation/widgets/user_card.dart';
 import 'package:miniapp/features/course/providers/course_provider.dart';
 import 'package:miniapp/shared/models/user.dart';
 import 'package:miniapp/shared/models/course.dart';
+import 'package:miniapp/shared/widgets/user_avatar.dart';
 
 class UserListScreen extends ConsumerWidget {
   const UserListScreen({super.key});
@@ -133,19 +134,11 @@ class UserListScreen extends ConsumerWidget {
               const SizedBox(height: 20),
               Row(
                 children: [
-                  CircleAvatar(
+                  UserAvatar(
+                    photoUrl: user.photoUrl,
+                    firstName: user.firstName ?? '',
                     radius: 30,
                     backgroundColor: Color(0xFF4A90B8), // primaryBlue
-                    child: Text(
-                      (user.firstName?.isNotEmpty == true
-                          ? user.firstName![0]
-                          : 'U').toUpperCase(),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
                   ),
                   const SizedBox(width: 16),
                   Expanded(

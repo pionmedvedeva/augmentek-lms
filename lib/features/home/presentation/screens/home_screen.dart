@@ -4,6 +4,7 @@ import 'package:miniapp/features/auth/providers/user_provider.dart';
 import 'package:miniapp/features/student/presentation/screens/student_dashboard.dart';
 import 'package:miniapp/features/course/presentation/screens/course_list_screen.dart';
 import 'package:miniapp/features/admin/presentation/screens/admin_dashboard.dart';
+import 'package:miniapp/shared/widgets/user_avatar.dart';
 import 'package:telegram_web_app/telegram_web_app.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -61,51 +62,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 padding: const EdgeInsets.only(right: 16),
                 child: GestureDetector(
                   onTap: () => _showUserProfile(context, appUser),
-                  child: CircleAvatar(
+                  child: UserAvatar(
+                    photoUrl: appUser.photoUrl,
+                    firstName: appUser.firstName,
                     radius: 18,
                     backgroundColor: Colors.white.withOpacity(0.2),
-                    child: appUser.photoUrl != null && appUser.photoUrl!.isNotEmpty
-                        ? ClipOval(
-                            child: Image.network(
-                              appUser.photoUrl!,
-                              width: 36,
-                              height: 36,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) {
-                                return Text(
-                                  appUser.firstName.isNotEmpty 
-                                      ? appUser.firstName[0].toUpperCase() 
-                                      : 'U',
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                );
-                              },
-                              loadingBuilder: (context, child, loadingProgress) {
-                                if (loadingProgress == null) return child;
-                                return const SizedBox(
-                                  width: 16,
-                                  height: 16,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                                  ),
-                                );
-                              },
-                            ),
-                          )
-                        : Text(
-                            appUser.firstName.isNotEmpty 
-                                ? appUser.firstName[0].toUpperCase() 
-                                : 'U',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
+                    textStyle: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ),
@@ -165,48 +131,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           children: [
             Row(
               children: [
-                CircleAvatar(
+                UserAvatar(
+                  photoUrl: appUser.photoUrl,
+                  firstName: appUser.firstName,
                   radius: 40,
                   backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                  child: appUser.photoUrl != null && appUser.photoUrl!.isNotEmpty
-                      ? ClipOval(
-                          child: Image.network(
-                            appUser.photoUrl!,
-                            width: 80,
-                            height: 80,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) {
-                              return Text(
-                                appUser.firstName.isNotEmpty 
-                                    ? appUser.firstName[0].toUpperCase() 
-                                    : 'U',
-                                style: TextStyle(
-                                  color: Theme.of(context).colorScheme.primary,
-                                  fontSize: 32,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              );
-                            },
-                            loadingBuilder: (context, child, loadingProgress) {
-                              if (loadingProgress == null) return child;
-                              return const SizedBox(
-                                width: 24,
-                                height: 24,
-                                child: CircularProgressIndicator(strokeWidth: 2),
-                              );
-                            },
-                          ),
-                        )
-                      : Text(
-                          appUser.firstName.isNotEmpty 
-                              ? appUser.firstName[0].toUpperCase() 
-                              : 'U',
-                          style: TextStyle(
-                            color: Theme.of(context).colorScheme.primary,
-                            fontSize: 32,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+                  textStyle: TextStyle(
+                    color: Theme.of(context).colorScheme.primary,
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const SizedBox(width: 16),
                 Expanded(

@@ -5,6 +5,7 @@ import 'package:miniapp/features/course/providers/enrollment_provider.dart';
 import 'package:miniapp/features/student/presentation/screens/student_homework_screen.dart';
 import 'package:miniapp/features/student/presentation/screens/student_course_view_screen.dart';
 import 'package:miniapp/features/student/presentation/screens/enrolled_courses_screen.dart';
+import 'package:miniapp/shared/widgets/user_avatar.dart';
 
 class StudentDashboard extends ConsumerWidget {
   const StudentDashboard({super.key});
@@ -51,51 +52,16 @@ class StudentDashboard extends ConsumerWidget {
                     children: [
                       Row(
                         children: [
-                          CircleAvatar(
+                          UserAvatar(
+                            photoUrl: appUser.photoUrl,
+                            firstName: appUser.firstName,
                             radius: 30,
                             backgroundColor: Colors.white.withOpacity(0.2),
-                            child: appUser.photoUrl != null && appUser.photoUrl!.isNotEmpty
-                                ? ClipOval(
-                                    child: Image.network(
-                                      appUser.photoUrl!,
-                                      width: 60,
-                                      height: 60,
-                                      fit: BoxFit.cover,
-                                      errorBuilder: (context, error, stackTrace) {
-                                        return Text(
-                                          appUser.firstName.isNotEmpty 
-                                              ? appUser.firstName[0].toUpperCase() 
-                                              : 'U',
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 24,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        );
-                                      },
-                                      loadingBuilder: (context, child, loadingProgress) {
-                                        if (loadingProgress == null) return child;
-                                        return const SizedBox(
-                                          width: 20,
-                                          height: 20,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                                          ),
-                                        );
-                                      },
-                                    ),
-                                  )
-                                : Text(
-                                    appUser.firstName.isNotEmpty 
-                                        ? appUser.firstName[0].toUpperCase() 
-                                        : 'U',
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 24,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
+                            textStyle: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                           const SizedBox(width: 16),
                           Expanded(

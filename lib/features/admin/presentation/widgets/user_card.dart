@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:miniapp/shared/models/user.dart';
 import 'package:miniapp/features/course/providers/course_provider.dart';
+import 'package:miniapp/shared/widgets/user_avatar.dart';
 
 class UserCard extends ConsumerWidget {
   final AppUser user;
@@ -31,19 +32,11 @@ class UserCard extends ConsumerWidget {
               Row(
                 children: [
                   // Аватар
-                  CircleAvatar(
+                  UserAvatar(
+                    photoUrl: user.photoUrl,
+                    firstName: user.firstName ?? '',
                     radius: 24,
                     backgroundColor: Color(0xFF4A90B8), // primaryBlue
-                    child: Text(
-                      (user.firstName?.isNotEmpty == true
-                          ? user.firstName![0]
-                          : 'U').toUpperCase(),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
                   ),
                   const SizedBox(width: 16),
                   
