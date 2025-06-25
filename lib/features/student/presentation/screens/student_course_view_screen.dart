@@ -23,7 +23,7 @@ class StudentCourseViewScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(course.title),
-        backgroundColor: Colors.deepPurple,
+        backgroundColor: Color(0xFF4A90B8), // primaryBlue
         foregroundColor: Colors.white,
       ),
       body: sections.when(
@@ -134,7 +134,7 @@ class StudentCourseViewScreen extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 16),
-          ...directLessons.map((lesson) => _buildLessonCard(context, lesson)),
+          ...directLessons.map((lesson) => _buildLessonCard(context, lesson, course)),
           const SizedBox(height: 24),
         ],
 
@@ -154,7 +154,7 @@ class StudentCourseViewScreen extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 16),
-          ...sections.map((section) => _buildSectionCard(context, section, courseLessons)),
+          ...sections.map((section) => _buildSectionCard(context, section, courseLessons, course)),
         ],
 
         // Пустое состояние
@@ -223,7 +223,7 @@ class StudentCourseViewScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildSectionCard(BuildContext context, Section section, List<Lesson> allLessons) {
+  Widget _buildSectionCard(BuildContext context, Section section, List<Lesson> allLessons, Course course) {
     final sectionLessons = allLessons.where((lesson) => lesson.sectionId == section.id).toList();
 
     return Card(
@@ -237,13 +237,13 @@ class StudentCourseViewScreen extends ConsumerWidget {
         subtitle: Text('${sectionLessons.length} урок(ов)'),
         children: sectionLessons.map((lesson) => Padding(
           padding: const EdgeInsets.only(left: 16),
-          child: _buildLessonCard(context, lesson),
+          child: _buildLessonCard(context, lesson, course),
         )).toList(),
       ),
     );
   }
 
-  Widget _buildLessonCard(BuildContext context, Lesson lesson) {
+  Widget _buildLessonCard(BuildContext context, Lesson lesson, Course course) {
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
@@ -303,7 +303,10 @@ class StudentCourseViewScreen extends ConsumerWidget {
         onTap: () {
           Navigator.of(context).push(
             MaterialPageRoute(
-              builder: (context) => LessonViewScreen(lesson: lesson),
+              builder: (context) => LessonViewScreen(
+                lesson: lesson,
+                courseId: course.id,
+              ),
             ),
           );
         },

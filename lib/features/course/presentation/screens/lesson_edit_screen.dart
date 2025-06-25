@@ -143,7 +143,7 @@ class _LessonEditScreenState extends ConsumerState<LessonEditScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Редактировать урок'),
-        backgroundColor: Colors.deepPurple,
+                    backgroundColor: Color(0xFF4A90B8), // primaryBlue
         foregroundColor: Colors.white,
         actions: [
           TextButton(

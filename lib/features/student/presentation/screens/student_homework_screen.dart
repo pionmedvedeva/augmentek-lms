@@ -22,7 +22,7 @@ class StudentHomeworkScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Мои домашние задания'),
-        backgroundColor: Colors.deepPurple,
+        backgroundColor: Color(0xFF4A90B8), // primaryBlue
         foregroundColor: Colors.white,
       ),
       body: studentHomework.when(

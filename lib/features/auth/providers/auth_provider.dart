@@ -41,12 +41,41 @@ class AuthNotifier extends StateNotifier<AsyncValue<void>> {
         throw Exception('Firebase is not properly initialized');
       }
 
-      // Если пользователь уже залогинен – просто загружаем его данные
+      // Если пользователь уже залогинен – загружаем его данные из Firestore
       if (_auth.currentUser != null) {
         _ref.read(loggerProvider).i('User already signed in: ${_auth.currentUser!.uid}');
-        _ref.read(debugLogsProvider.notifier).addLog('🔄 User already signed in, skipping auth flow');
-        // TODO: Implement proper user loading for already signed in users
-        // For now, continue with the normal flow
+        _ref.read(debugLogsProvider.notifier).addLog('🔄 User already signed in, loading user data...');
+        
+        // Получаем данные пользователя из Telegram для определения ID
+        final webApp = TelegramWebApp.instance;
+        final tgUser = webApp.initDataUnsafe?.user;
+        
+        if (tgUser != null) {
+          // У нас есть Telegram данные, можем загрузить пользователя
+          try {
+            final existingUser = await _userRepository.getUser(tgUser.id);
+            if (existingUser != null) {
+              _ref.read(userProvider.notifier).setUser(existingUser);
+              _ref.read(debugLogsProvider.notifier).addLog('✅ User data loaded from Firestore');
+              state = const AsyncValue.data(null);
+              return;
+            } else {
+              _ref.read(debugLogsProvider.notifier).addLog('⚠️ User not found in Firestore, creating...');
+            }
+          } catch (e) {
+            _ref.read(debugLogsProvider.notifier).addLog('❌ Error loading user: $e');
+          }
+        } else {
+          // Нет Telegram данных, используем mock пользователя
+          final existingUser = await _userRepository.getUser(mockUser.id);
+          if (existingUser != null) {
+            _ref.read(userProvider.notifier).setUser(existingUser);
+            _ref.read(debugLogsProvider.notifier).addLog('✅ Mock user data loaded from Firestore');
+            state = const AsyncValue.data(null);
+            return;
+          }
+        }
+        
         _ref.read(debugLogsProvider.notifier).addLog('⚠️ Continuing with normal auth flow...');
       }
 

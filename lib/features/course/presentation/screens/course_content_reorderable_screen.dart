@@ -30,7 +30,7 @@ class _CourseContentReorderableScreenState extends ConsumerState<CourseContentRe
     return Scaffold(
       appBar: AppBar(
         title: Text('Содержимое: ${widget.course.title}'),
-        backgroundColor: Colors.deepPurple,
+        backgroundColor: Color(0xFF4A90B8), // primaryBlue
         foregroundColor: Colors.white,
         actions: [
           IconButton(

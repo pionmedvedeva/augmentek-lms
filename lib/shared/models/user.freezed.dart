@@ -28,6 +28,12 @@ mixin _$AppUser {
   String? get languageCode => throw _privateConstructorUsedError;
   String? get photoUrl => throw _privateConstructorUsedError;
   bool get isAdmin => throw _privateConstructorUsedError;
+  List<String> get enrolledCourses => throw _privateConstructorUsedError;
+  Map<String, double> get courseProgress => throw _privateConstructorUsedError;
+  Map<String, DateTime> get lastAccessedAt =>
+      throw _privateConstructorUsedError; // курс -> дата последнего доступа
+  Map<String, String> get lastLessonId =>
+      throw _privateConstructorUsedError; // курс -> ID последнего урока
   Map<String, dynamic> get settings => throw _privateConstructorUsedError;
   DateTime get createdAt => throw _privateConstructorUsedError;
   DateTime get updatedAt => throw _privateConstructorUsedError;
@@ -55,6 +61,10 @@ abstract class $AppUserCopyWith<$Res> {
       String? languageCode,
       String? photoUrl,
       bool isAdmin,
+      List<String> enrolledCourses,
+      Map<String, double> courseProgress,
+      Map<String, DateTime> lastAccessedAt,
+      Map<String, String> lastLessonId,
       Map<String, dynamic> settings,
       DateTime createdAt,
       DateTime updatedAt});
@@ -83,6 +93,10 @@ class _$AppUserCopyWithImpl<$Res, $Val extends AppUser>
     Object? languageCode = freezed,
     Object? photoUrl = freezed,
     Object? isAdmin = null,
+    Object? enrolledCourses = null,
+    Object? courseProgress = null,
+    Object? lastAccessedAt = null,
+    Object? lastLessonId = null,
     Object? settings = null,
     Object? createdAt = null,
     Object? updatedAt = null,
@@ -120,6 +134,22 @@ class _$AppUserCopyWithImpl<$Res, $Val extends AppUser>
           ? _value.isAdmin
           : isAdmin // ignore: cast_nullable_to_non_nullable
               as bool,
+      enrolledCourses: null == enrolledCourses
+          ? _value.enrolledCourses
+          : enrolledCourses // ignore: cast_nullable_to_non_nullable
+              as List<String>,
+      courseProgress: null == courseProgress
+          ? _value.courseProgress
+          : courseProgress // ignore: cast_nullable_to_non_nullable
+              as Map<String, double>,
+      lastAccessedAt: null == lastAccessedAt
+          ? _value.lastAccessedAt
+          : lastAccessedAt // ignore: cast_nullable_to_non_nullable
+              as Map<String, DateTime>,
+      lastLessonId: null == lastLessonId
+          ? _value.lastLessonId
+          : lastLessonId // ignore: cast_nullable_to_non_nullable
+              as Map<String, String>,
       settings: null == settings
           ? _value.settings
           : settings // ignore: cast_nullable_to_non_nullable
@@ -152,6 +182,10 @@ abstract class _$$AppUserImplCopyWith<$Res> implements $AppUserCopyWith<$Res> {
       String? languageCode,
       String? photoUrl,
       bool isAdmin,
+      List<String> enrolledCourses,
+      Map<String, double> courseProgress,
+      Map<String, DateTime> lastAccessedAt,
+      Map<String, String> lastLessonId,
       Map<String, dynamic> settings,
       DateTime createdAt,
       DateTime updatedAt});
@@ -178,6 +212,10 @@ class __$$AppUserImplCopyWithImpl<$Res>
     Object? languageCode = freezed,
     Object? photoUrl = freezed,
     Object? isAdmin = null,
+    Object? enrolledCourses = null,
+    Object? courseProgress = null,
+    Object? lastAccessedAt = null,
+    Object? lastLessonId = null,
     Object? settings = null,
     Object? createdAt = null,
     Object? updatedAt = null,
@@ -215,6 +253,22 @@ class __$$AppUserImplCopyWithImpl<$Res>
           ? _value.isAdmin
           : isAdmin // ignore: cast_nullable_to_non_nullable
               as bool,
+      enrolledCourses: null == enrolledCourses
+          ? _value._enrolledCourses
+          : enrolledCourses // ignore: cast_nullable_to_non_nullable
+              as List<String>,
+      courseProgress: null == courseProgress
+          ? _value._courseProgress
+          : courseProgress // ignore: cast_nullable_to_non_nullable
+              as Map<String, double>,
+      lastAccessedAt: null == lastAccessedAt
+          ? _value._lastAccessedAt
+          : lastAccessedAt // ignore: cast_nullable_to_non_nullable
+              as Map<String, DateTime>,
+      lastLessonId: null == lastLessonId
+          ? _value._lastLessonId
+          : lastLessonId // ignore: cast_nullable_to_non_nullable
+              as Map<String, String>,
       settings: null == settings
           ? _value._settings
           : settings // ignore: cast_nullable_to_non_nullable
@@ -243,10 +297,18 @@ class _$AppUserImpl implements _AppUser {
       this.languageCode,
       this.photoUrl,
       this.isAdmin = false,
+      final List<String> enrolledCourses = const [],
+      final Map<String, double> courseProgress = const {},
+      final Map<String, DateTime> lastAccessedAt = const {},
+      final Map<String, String> lastLessonId = const {},
       final Map<String, dynamic> settings = const {},
       required this.createdAt,
       required this.updatedAt})
-      : _settings = settings;
+      : _enrolledCourses = enrolledCourses,
+        _courseProgress = courseProgress,
+        _lastAccessedAt = lastAccessedAt,
+        _lastLessonId = lastLessonId,
+        _settings = settings;
 
   factory _$AppUserImpl.fromJson(Map<String, dynamic> json) =>
       _$$AppUserImplFromJson(json);
@@ -268,7 +330,47 @@ class _$AppUserImpl implements _AppUser {
   @override
   @JsonKey()
   final bool isAdmin;
+  final List<String> _enrolledCourses;
+  @override
+  @JsonKey()
+  List<String> get enrolledCourses {
+    if (_enrolledCourses is EqualUnmodifiableListView) return _enrolledCourses;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_enrolledCourses);
+  }
+
+  final Map<String, double> _courseProgress;
+  @override
+  @JsonKey()
+  Map<String, double> get courseProgress {
+    if (_courseProgress is EqualUnmodifiableMapView) return _courseProgress;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableMapView(_courseProgress);
+  }
+
+  final Map<String, DateTime> _lastAccessedAt;
+  @override
+  @JsonKey()
+  Map<String, DateTime> get lastAccessedAt {
+    if (_lastAccessedAt is EqualUnmodifiableMapView) return _lastAccessedAt;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableMapView(_lastAccessedAt);
+  }
+
+// курс -> дата последнего доступа
+  final Map<String, String> _lastLessonId;
+// курс -> дата последнего доступа
+  @override
+  @JsonKey()
+  Map<String, String> get lastLessonId {
+    if (_lastLessonId is EqualUnmodifiableMapView) return _lastLessonId;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableMapView(_lastLessonId);
+  }
+
+// курс -> ID последнего урока
   final Map<String, dynamic> _settings;
+// курс -> ID последнего урока
   @override
   @JsonKey()
   Map<String, dynamic> get settings {
@@ -284,7 +386,7 @@ class _$AppUserImpl implements _AppUser {
 
   @override
   String toString() {
-    return 'AppUser(id: $id, firebaseId: $firebaseId, firstName: $firstName, lastName: $lastName, username: $username, languageCode: $languageCode, photoUrl: $photoUrl, isAdmin: $isAdmin, settings: $settings, createdAt: $createdAt, updatedAt: $updatedAt)';
+    return 'AppUser(id: $id, firebaseId: $firebaseId, firstName: $firstName, lastName: $lastName, username: $username, languageCode: $languageCode, photoUrl: $photoUrl, isAdmin: $isAdmin, enrolledCourses: $enrolledCourses, courseProgress: $courseProgress, lastAccessedAt: $lastAccessedAt, lastLessonId: $lastLessonId, settings: $settings, createdAt: $createdAt, updatedAt: $updatedAt)';
   }
 
   @override
@@ -306,6 +408,14 @@ class _$AppUserImpl implements _AppUser {
             (identical(other.photoUrl, photoUrl) ||
                 other.photoUrl == photoUrl) &&
             (identical(other.isAdmin, isAdmin) || other.isAdmin == isAdmin) &&
+            const DeepCollectionEquality()
+                .equals(other._enrolledCourses, _enrolledCourses) &&
+            const DeepCollectionEquality()
+                .equals(other._courseProgress, _courseProgress) &&
+            const DeepCollectionEquality()
+                .equals(other._lastAccessedAt, _lastAccessedAt) &&
+            const DeepCollectionEquality()
+                .equals(other._lastLessonId, _lastLessonId) &&
             const DeepCollectionEquality().equals(other._settings, _settings) &&
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt) &&
@@ -325,6 +435,10 @@ class _$AppUserImpl implements _AppUser {
       languageCode,
       photoUrl,
       isAdmin,
+      const DeepCollectionEquality().hash(_enrolledCourses),
+      const DeepCollectionEquality().hash(_courseProgress),
+      const DeepCollectionEquality().hash(_lastAccessedAt),
+      const DeepCollectionEquality().hash(_lastLessonId),
       const DeepCollectionEquality().hash(_settings),
       createdAt,
       updatedAt);
@@ -355,6 +469,10 @@ abstract class _AppUser implements AppUser {
       final String? languageCode,
       final String? photoUrl,
       final bool isAdmin,
+      final List<String> enrolledCourses,
+      final Map<String, double> courseProgress,
+      final Map<String, DateTime> lastAccessedAt,
+      final Map<String, String> lastLessonId,
       final Map<String, dynamic> settings,
       required final DateTime createdAt,
       required final DateTime updatedAt}) = _$AppUserImpl;
@@ -377,6 +495,14 @@ abstract class _AppUser implements AppUser {
   String? get photoUrl;
   @override
   bool get isAdmin;
+  @override
+  List<String> get enrolledCourses;
+  @override
+  Map<String, double> get courseProgress;
+  @override
+  Map<String, DateTime> get lastAccessedAt; // курс -> дата последнего доступа
+  @override
+  Map<String, String> get lastLessonId; // курс -> ID последнего урока
   @override
   Map<String, dynamic> get settings;
   @override

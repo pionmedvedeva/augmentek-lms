@@ -25,7 +25,7 @@ class CourseContentScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text('Содержимое: ${course.title}'),
-        backgroundColor: Colors.deepPurple,
+        backgroundColor: Color(0xFF4A90B8), // primaryBlue
         foregroundColor: Colors.white,
         actions: [
           IconButton(
@@ -219,7 +219,7 @@ class CourseContentScreen extends ConsumerWidget {
                                 icon: const Icon(Icons.folder_outlined),
                                 label: const Text('Добавить раздел'),
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.deepPurple,
+                                  backgroundColor: Color(0xFF4A90B8), // primaryBlue
                                   foregroundColor: Colors.white,
                                   padding: const EdgeInsets.symmetric(vertical: 12),
                                 ),
@@ -252,7 +252,7 @@ class CourseContentScreen extends ConsumerWidget {
                                 icon: const Icon(Icons.folder_outlined),
                                 label: const Text('Добавить раздел'),
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.deepPurple,
+                                  backgroundColor: Color(0xFF4A90B8), // primaryBlue
                                   foregroundColor: Colors.white,
                                   padding: const EdgeInsets.symmetric(vertical: 12),
                                 ),
@@ -322,7 +322,7 @@ class CourseContentScreen extends ConsumerWidget {
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       child: ExpansionTile(
-        leading: const Icon(Icons.folder, color: Colors.deepPurple),
+        leading: Icon(Icons.folder, color: Color(0xFF4A90B8)), // primaryBlue
         title: Text(
           section.title,
           style: const TextStyle(fontWeight: FontWeight.bold),

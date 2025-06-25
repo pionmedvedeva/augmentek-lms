@@ -23,6 +23,10 @@ class HomeworkSubmission with _$HomeworkSubmission {
     String? reviewedBy,    // ID админа который проверил
     required DateTime submittedAt,
     DateTime? reviewedAt,
+    // Новые поля для файлов Telegram бота
+    String? fileUrl,       // URL файла в Firebase Storage
+    String? fileName,      // Оригинальное имя файла
+    DateTime? fileUploadedAt, // Время загрузки файла
   }) = _HomeworkSubmission;
 
   factory HomeworkSubmission.fromJson(Map<String, dynamic> json) =>

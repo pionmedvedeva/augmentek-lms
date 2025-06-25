@@ -18,7 +18,23 @@
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="Augmentek LMS - Learning Management System">
+  <meta name="description" content="Augmentek - Инструменты усиления человеческого интеллекта">
+  
+  <!-- Open Graph / Social Media meta tags -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Augmentek">
+  <meta property="og:description" content="Инструменты усиления человеческого интеллекта">
+  <meta property="og:url" content="https://augmentek-lms.web.app">
+  <meta property="og:site_name" content="Augmentek">
+  
+  <!-- Twitter Card meta tags -->
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Augmentek">
+  <meta name="twitter:description" content="Инструменты усиления человеческого интеллекта">
+  
+  <!-- Additional SEO meta tags -->
+  <meta name="author" content="Augmentek">
+  <meta name="keywords" content="обучение, LMS, образование, Augmentek, интеллект">
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="mobile-web-app-capable" content="yes">
@@ -27,7 +43,7 @@
   <!-- iOS meta tags & icons -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Augmentek LMS">
+  <meta name="apple-mobile-web-app-title" content="Augmentek">
   
   <!-- Telegram WebApp meta tags -->
   <meta name="telegram-web-app-capable" content="yes">
@@ -37,7 +53,7 @@
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
 
-  <title>Augmentek LMS</title>
+  <title>Augmentek - Инструменты усиления человеческого интеллекта</title>
   <link rel="manifest" href="manifest.json">
   
   <style>
@@ -55,7 +71,7 @@
       align-items: center;
       justify-content: center;
       height: 100%;
-      background-color: #673AB7;
+      background: linear-gradient(135deg, #4A90B8, #87CEEB);
       color: white;
       font-family: Arial, sans-serif;
     }
@@ -74,12 +90,58 @@
       height: 100% !important;
       min-height: var(--tg-viewport-height, 100%);
     }
+    
+    /* Скрываем стандартные надписи загрузки Flutter */
+    .flutter-loader,
+    #flutter-loading {
+      display: none !important;
+      visibility: hidden !important;
+    }
+    
+    /* Улучшаем наш loading экран */
+    #loading {
+      z-index: 9999;
+      font-size: 18px;
+      font-weight: 500;
+      letter-spacing: 0.5px;
+    }
+    
+    #loading div {
+      animation: pulse 2s ease-in-out infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
   </style>
 
   <script>
     // The value below is injected by flutter build, do not touch.
     const serviceWorkerVersion = '{{flutter_service_worker_version}}';
   </script>
+  <!-- Structured data for SEO -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Augmentek",
+    "description": "Инструменты усиления человеческого интеллекта",
+    "url": "https://augmentek-lms.web.app",
+    "applicationCategory": "EducationalApplication",
+    "operatingSystem": "Web",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "RUB"
+    },
+    "creator": {
+      "@type": "Organization",
+      "name": "Augmentek"
+    }
+  }
+  </script>
+
   <!-- Telegram WebApp script -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <!-- Flutter Bootstrap -->
@@ -87,7 +149,7 @@
 </head>
 <body>
   <div id="loading">
-    <div>Loading Augmentek LMS...</div>
+    <div>Загружаем Augmentek...</div>
   </div>
   
   <script>

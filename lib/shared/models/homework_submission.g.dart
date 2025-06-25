@@ -22,6 +22,11 @@ _$HomeworkSubmissionImpl _$$HomeworkSubmissionImplFromJson(
       reviewedAt: json['reviewedAt'] == null
           ? null
           : DateTime.parse(json['reviewedAt'] as String),
+      fileUrl: json['fileUrl'] as String?,
+      fileName: json['fileName'] as String?,
+      fileUploadedAt: json['fileUploadedAt'] == null
+          ? null
+          : DateTime.parse(json['fileUploadedAt'] as String),
     );
 
 Map<String, dynamic> _$$HomeworkSubmissionImplToJson(
@@ -38,6 +43,9 @@ Map<String, dynamic> _$$HomeworkSubmissionImplToJson(
       'reviewedBy': instance.reviewedBy,
       'submittedAt': instance.submittedAt.toIso8601String(),
       'reviewedAt': instance.reviewedAt?.toIso8601String(),
+      'fileUrl': instance.fileUrl,
+      'fileName': instance.fileName,
+      'fileUploadedAt': instance.fileUploadedAt?.toIso8601String(),
     };
 
 const _$HomeworkStatusEnumMap = {

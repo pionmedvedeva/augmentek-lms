@@ -14,6 +14,8 @@ class HomeworkProvider extends StateNotifier<List<HomeworkSubmission>> {
     required String studentId,
     required String studentName,
     required String answer,
+    String? fileUrl,
+    String? fileName,
   }) async {
     try {
       final submission = HomeworkSubmission(
@@ -25,6 +27,9 @@ class HomeworkProvider extends StateNotifier<List<HomeworkSubmission>> {
         answer: answer,
         status: HomeworkStatus.pending,
         submittedAt: DateTime.now(),
+        fileUrl: fileUrl,
+        fileName: fileName,
+        fileUploadedAt: fileUrl != null ? DateTime.now() : null,
       );
 
       await _firestore
@@ -151,6 +156,38 @@ class HomeworkProvider extends StateNotifier<List<HomeworkSubmission>> {
       return null;
     } catch (e) {
       return null;
+    }
+  }
+
+  // Обновить файл в домашнем задании (используется Telegram ботом)
+  Future<void> updateHomeworkFile({
+    required String submissionId,
+    required String fileUrl,
+    required String fileName,
+  }) async {
+    try {
+      await _firestore
+          .collection('homework_submissions')
+          .doc(submissionId)
+          .update({
+        'fileUrl': fileUrl,
+        'fileName': fileName,
+        'fileUploadedAt': DateTime.now().toIso8601String(),
+      });
+
+      // Обновляем локальный список
+      state = state.map((submission) {
+        if (submission.id == submissionId) {
+          return submission.copyWith(
+            fileUrl: fileUrl,
+            fileName: fileName,
+            fileUploadedAt: DateTime.now(),
+          );
+        }
+        return submission;
+      }).toList();
+    } catch (e) {
+      throw Exception('Ошибка обновления файла: $e');
     }
   }
 }

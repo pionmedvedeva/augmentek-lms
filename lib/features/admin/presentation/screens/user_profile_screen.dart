@@ -17,7 +17,7 @@ class UserProfileScreen extends ConsumerWidget {
       return Scaffold(
         appBar: AppBar(
           title: const Text('Ошибка'),
-          backgroundColor: Colors.deepPurple,
+          backgroundColor: Color(0xFF4A90B8), // primaryBlue
           foregroundColor: Colors.white,
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
@@ -35,7 +35,7 @@ class UserProfileScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Профиль пользователя'),
-        backgroundColor: Colors.deepPurple,
+        backgroundColor: Color(0xFF4A90B8), // primaryBlue
         foregroundColor: Colors.white,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),

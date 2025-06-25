@@ -36,15 +36,11 @@ class _AdminDashboardState extends ConsumerState<AdminDashboard>
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Админ панель'),
+        title: const Text('Учительская'),
         centerTitle: true,
-        backgroundColor: Colors.deepPurple,
+                  backgroundColor: Color(0xFF4A90B8), // primaryBlue
         foregroundColor: Colors.white,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go('/home'),
-          tooltip: 'Вернуться на главную',
-        ),
+        automaticallyImplyLeading: false,
         bottom: TabBar(
           controller: _tabController,
           indicatorColor: Colors.white,
@@ -88,7 +84,7 @@ class _AdminDashboardState extends ConsumerState<AdminDashboard>
                   ),
                   SizedBox(height: 8),
                   Text(
-                    'У вас нет прав администратора',
+                    'У вас нет прав доступа в учительскую',
                     style: TextStyle(color: Colors.grey),
                   ),
                 ],

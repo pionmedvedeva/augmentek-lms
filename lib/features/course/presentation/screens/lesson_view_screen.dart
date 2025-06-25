@@ -5,14 +5,17 @@ import 'package:miniapp/shared/models/user.dart';
 import 'package:miniapp/shared/models/homework_submission.dart';
 import 'package:miniapp/features/auth/providers/user_provider.dart';
 import 'package:miniapp/features/course/providers/homework_provider.dart';
+import 'package:miniapp/features/course/providers/enrollment_provider.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 
 class LessonViewScreen extends ConsumerStatefulWidget {
   final Lesson lesson;
+  final String? courseId;
 
   const LessonViewScreen({
     super.key,
     required this.lesson,
+    this.courseId,
   });
 
   @override
@@ -30,6 +33,21 @@ class _LessonViewScreenState extends ConsumerState<LessonViewScreen> {
     super.initState();
     _initializeVideoPlayer();
     _checkExistingSubmission();
+    _trackLessonAccess();
+  }
+
+  void _trackLessonAccess() {
+    // Отслеживаем что студент открыл урок
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final user = ref.read(userProvider).value;
+      if (user != null && !user.isAdmin && widget.courseId != null) {
+        // Обновляем активность для курса
+        ref.read(enrollmentProvider.notifier).updateLastAccessed(
+          widget.courseId!,
+          widget.lesson.id,
+        );
+      }
+    });
   }
 
   void _initializeVideoPlayer() {
@@ -84,7 +102,7 @@ class _LessonViewScreenState extends ConsumerState<LessonViewScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.lesson.title),
-        backgroundColor: Colors.deepPurple,
+        backgroundColor: Color(0xFF4A90B8), // primaryBlue
         foregroundColor: Colors.white,
       ),
       body: SingleChildScrollView(
@@ -243,8 +261,8 @@ class _LessonViewScreenState extends ConsumerState<LessonViewScreen> {
               
               const SizedBox(height: 16),
               
-                             // Форма отправки домашки (только для студентов)
-               if (user != null && !user.isAdmin) ...[
+                             // Форма отправки домашки (для всех авторизованных пользователей)
+               if (user != null) ...[
                  // Показываем статус существующей домашки
                  if (_existingSubmission != null) ...[
                    Container(
@@ -276,6 +294,22 @@ class _LessonViewScreenState extends ConsumerState<LessonViewScreen> {
                          ),
                          const SizedBox(height: 8),
                          Text('Ваш ответ: ${_existingSubmission!.answer}'),
+                         if (_existingSubmission!.fileUrl != null) ...[
+                           const SizedBox(height: 8),
+                           Row(
+                             children: [
+                               const Icon(Icons.attach_file, size: 16, color: Colors.blue),
+                               const SizedBox(width: 4),
+                               Text(
+                                 'Приложен файл: ${_existingSubmission!.fileName ?? "файл"}',
+                                 style: const TextStyle(
+                                   color: Colors.blue,
+                                   fontWeight: FontWeight.w500,
+                                 ),
+                               ),
+                             ],
+                           ),
+                         ],
                          if (_existingSubmission!.adminComment != null) ...[
                            const SizedBox(height: 8),
                            Text(
@@ -312,6 +346,30 @@ class _LessonViewScreenState extends ConsumerState<LessonViewScreen> {
                        hintText: 'Опишите ваше решение...',
                      ),
                      maxLines: 5,
+                   ),
+                   const SizedBox(height: 8),
+                   Container(
+                     padding: const EdgeInsets.all(12),
+                     decoration: BoxDecoration(
+                       color: Colors.blue.withOpacity(0.05),
+                       borderRadius: BorderRadius.circular(8),
+                       border: Border.all(color: Colors.blue.withOpacity(0.3)),
+                     ),
+                     child: Row(
+                       children: [
+                         const Icon(Icons.info_outline, color: Colors.blue, size: 20),
+                         const SizedBox(width: 8),
+                         Expanded(
+                           child: Text(
+                             'Вы также можете загрузить файлы через Telegram бот @Augmentek_LMS',
+                             style: TextStyle(
+                               color: Colors.blue[700],
+                               fontSize: 14,
+                             ),
+                           ),
+                         ),
+                       ],
+                     ),
                    ),
                    const SizedBox(height: 12),
                    SizedBox(
@@ -354,7 +412,37 @@ class _LessonViewScreenState extends ConsumerState<LessonViewScreen> {
                  ],
                ],
               
+              // Дебаг информация (временно)
               const SizedBox(height: 24),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.blue.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.blue.withOpacity(0.3)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Отладочная информация:',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.blue,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text('Пользователь: ${user?.firstName ?? "null"} ${user?.lastName ?? ""}'),
+                    Text('ID: ${user?.id ?? "null"}'),
+                    Text('Админ: ${user?.isAdmin ?? "null"}'),
+                    Text('Задание есть: ${widget.lesson.homeworkTask?.isNotEmpty ?? false}'),
+                    Text('Отправлено ранее: ${_existingSubmission != null}'),
+                    if (_existingSubmission != null)
+                      Text('Статус: ${_existingSubmission!.status.name}'),
+                    Text('Показывать форму: ${user != null && (_existingSubmission == null || _existingSubmission!.status == HomeworkStatus.needsWork)}'),
+                  ],
+                ),
+              ),
             ],
           ],
         ),

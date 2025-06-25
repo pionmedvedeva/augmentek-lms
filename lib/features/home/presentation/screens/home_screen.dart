@@ -39,24 +39,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         final tabs = [
           const BottomNavigationBarItem(
             icon: Icon(Icons.home),
-            label: 'Главная',
+            label: 'За парту',
           ),
           const BottomNavigationBarItem(
             icon: Icon(Icons.school),
-            label: 'Курсы',
+            label: 'В коридор',
           ),
           if (appUser.isAdmin)
             const BottomNavigationBarItem(
               icon: Icon(Icons.admin_panel_settings),
-              label: 'Админ',
+              label: 'Учительская',
             ),
         ];
 
         return Scaffold(
           appBar: AppBar(
-            title: const Text('LMS Augmentek'),
-            backgroundColor: Colors.deepPurple,
-            foregroundColor: Colors.white,
+            title: const Text('Augmentek'),
             actions: [
               // Аватар пользователя с прямым кликом
               Padding(
@@ -117,17 +115,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             index: _currentIndex,
             children: screens,
           ),
-          bottomNavigationBar: BottomNavigationBar(
-            currentIndex: _currentIndex,
-            onTap: (index) {
-              setState(() {
-                _currentIndex = index;
-              });
-            },
-            type: BottomNavigationBarType.fixed,
-            selectedItemColor: Colors.deepPurple,
-            unselectedItemColor: Colors.grey,
-            items: tabs,
+          bottomNavigationBar: Container(
+            margin: EdgeInsets.only(
+              bottom: MediaQuery.of(context).padding.bottom > 0 ? 4 : 0,
+            ),
+            child: BottomNavigationBar(
+              currentIndex: _currentIndex,
+              onTap: (index) {
+                setState(() {
+                  _currentIndex = index;
+                });
+              },
+              type: BottomNavigationBarType.fixed,
+              selectedItemColor: Theme.of(context).colorScheme.primary,
+              unselectedItemColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+              backgroundColor: Theme.of(context).colorScheme.surface,
+              elevation: 8,
+              items: tabs,
+            ),
           ),
         );
       },
@@ -162,7 +167,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               children: [
                 CircleAvatar(
                   radius: 40,
-                  backgroundColor: Colors.deepPurple.withOpacity(0.1),
+                  backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
                   child: appUser.photoUrl != null && appUser.photoUrl!.isNotEmpty
                       ? ClipOval(
                           child: Image.network(
@@ -176,7 +181,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                     ? appUser.firstName[0].toUpperCase() 
                                     : 'U',
                                 style: TextStyle(
-                                  color: Colors.deepPurple[700],
+                                  color: Theme.of(context).colorScheme.primary,
                                   fontSize: 32,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -197,7 +202,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               ? appUser.firstName[0].toUpperCase() 
                               : 'U',
                           style: TextStyle(
-                            color: Colors.deepPurple[700],
+                            color: Theme.of(context).colorScheme.primary,
                             fontSize: 32,
                             fontWeight: FontWeight.bold,
                           ),
@@ -231,7 +236,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             vertical: 3,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.orange,
+                            color: const Color(0xFFE8A87C), // accentOrange
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: const Text(

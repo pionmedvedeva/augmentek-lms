@@ -70,7 +70,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 
                 // Название приложения
                 const Text(
-                  'LMS Augmentek',
+                  'Augmentek',
                   style: TextStyle(
                     fontSize: 32,
                     fontWeight: FontWeight.bold,

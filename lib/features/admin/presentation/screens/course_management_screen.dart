@@ -81,7 +81,7 @@ class CourseManagementScreen extends ConsumerWidget {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showCreateCourseDialog(context, ref),
-        backgroundColor: Colors.deepPurple,
+        backgroundColor: Color(0xFF4A90B8), // primaryBlue
         foregroundColor: Colors.white,
         child: const Icon(Icons.add),
       ),

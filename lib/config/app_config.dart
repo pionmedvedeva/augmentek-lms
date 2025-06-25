@@ -1,5 +1,5 @@
 class AppConfig {
-  static const String appName = 'LMS Mini App';
+  static const String appName = 'Augmentek';
   static const String appVersion = '1.0.0';
   
   // Firebase configuration

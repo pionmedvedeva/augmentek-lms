@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
+
 import 'package:miniapp/features/course/providers/course_provider.dart';
+import 'package:miniapp/features/course/providers/enrollment_provider.dart';
 import 'package:miniapp/shared/models/course.dart';
 import 'package:miniapp/features/student/presentation/screens/student_course_view_screen.dart';
 
@@ -17,7 +18,7 @@ class _CourseListScreenState extends ConsumerState<CourseListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final courses = ref.watch(activeCoursesProvider);
+    final courses = ref.watch(availableCoursesProvider);
 
     return Scaffold(
       body: Column(
@@ -88,9 +89,9 @@ class _CourseListScreenState extends ConsumerState<CourseListScreen> {
                     itemCount: filteredCourses.length,
                     itemBuilder: (context, index) {
                       final course = filteredCourses[index];
-                      return CourseCard(
+                      return AvailableCourseCard(
                         course: course,
-                        onTap: () => _openCourse(course),
+                        onView: () => _openCourse(course),
                       );
                     },
                   );
@@ -139,142 +140,203 @@ class _CourseListScreenState extends ConsumerState<CourseListScreen> {
   }
 }
 
-class CourseCard extends StatelessWidget {
+class AvailableCourseCard extends ConsumerWidget {
   final Course course;
-  final VoidCallback onTap;
+  final VoidCallback onView;
 
-  const CourseCard({
+  const AvailableCourseCard({
     super.key,
     required this.course,
-    required this.onTap,
+    required this.onView,
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final enrollmentState = ref.watch(enrollmentProvider);
+    final isEnrolled = ref.watch(isEnrolledProvider(course.id));
+
     return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      elevation: 1,
+      margin: const EdgeInsets.only(bottom: 12),
+      elevation: 2,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(12),
       ),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(8),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Row(
-            children: [
-              // Иконка/обложка курса
-              Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(8),
-                  color: Colors.grey.shade200,
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                // Иконка/обложка курса
+                Container(
+                  width: 60,
+                  height: 60,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    gradient: LinearGradient(
+                      colors: [
+                        Theme.of(context).colorScheme.primary.withOpacity(0.8),
+                        Theme.of(context).colorScheme.secondary.withOpacity(0.6),
+                      ],
+                    ),
+                  ),
                   child: course.imageUrl != null
-                      ? Image.network(
-                          course.imageUrl!,
-                          fit: BoxFit.cover,
-                          width: 56,
-                          height: 56,
-                          errorBuilder: (context, error, stackTrace) => _buildIconPlaceholder(),
+                      ? ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Image.network(
+                            course.imageUrl!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stack) {
+                              return const Center(
+                                child: Icon(
+                                  Icons.school,
+                                  color: Colors.white,
+                                  size: 24,
+                                ),
+                              );
+                            },
+                          ),
                         )
-                      : _buildIconPlaceholder(),
+                      : const Center(
+                          child: Icon(
+                            Icons.school,
+                            color: Colors.white,
+                            size: 24,
+                          ),
+                        ),
                 ),
-              ),
-              
-              const SizedBox(width: 12),
-              
-              // Информация о курсе
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      course.title,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
+                
+                const SizedBox(width: 16),
+                
+                // Информация о курсе
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        course.title,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      course.description,
-                      style: TextStyle(
-                        color: Colors.grey[600],
-                        fontSize: 13,
+                      const SizedBox(height: 4),
+                      Text(
+                        course.description,
+                        style: TextStyle(
+                          color: Colors.grey[600],
+                          fontSize: 14,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    if (course.tags.isNotEmpty) ...[
-                      const SizedBox(height: 6),
+                      const SizedBox(height: 8),
+                      // Статистика
                       Row(
                         children: [
                           Icon(
-                            Icons.tag,
+                            Icons.people,
                             size: 14,
                             color: Colors.grey[500],
                           ),
                           const SizedBox(width: 4),
-                          Expanded(
-                            child: Text(
-                              course.tags.take(2).join(', '),
-                              style: TextStyle(
-                                color: Colors.grey[500],
-                                fontSize: 12,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                          Text(
+                            '${course.enrolledCount} студентов',
+                            style: TextStyle(
+                              color: Colors.grey[500],
+                              fontSize: 12,
                             ),
                           ),
                         ],
                       ),
                     ],
-                  ],
+                  ),
                 ),
-              ),
-              
-              const SizedBox(width: 8),
-              
-              // Стрелка
-              Icon(
-                Icons.arrow_forward_ios,
-                size: 16,
-                color: Colors.grey[400],
+              ],
+            ),
+            
+            if (course.tags.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: course.tags.take(3).map((tag) => Chip(
+                  label: Text(
+                    tag,
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                  backgroundColor: Theme.of(context).colorScheme.secondary.withOpacity(0.2),
+                  side: BorderSide.none,
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                )).toList(),
               ),
             ],
-          ),
+            
+            const SizedBox(height: 16),
+            
+            // Кнопки действий
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: onView,
+                    child: const Text('Подробнее'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: isEnrolled 
+                        ? null 
+                        : enrollmentState.isLoading 
+                            ? null 
+                            : () => _enrollInCourse(ref, context),
+                    child: enrollmentState.isLoading
+                        ? const SizedBox(
+                            height: 16,
+                            width: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : Text(isEnrolled ? 'Записан' : 'Записаться'),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildIconPlaceholder() {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(8),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Colors.deepPurple.withOpacity(0.8),
-            Colors.purple.withOpacity(0.6),
-          ],
-        ),
-      ),
-      child: const Center(
-        child: Icon(
-          Icons.school,
-          size: 24,
-          color: Colors.white,
-        ),
-      ),
-    );
+  Future<void> _enrollInCourse(WidgetRef ref, BuildContext context) async {
+    try {
+      await ref.read(enrollmentProvider.notifier).enrollInCourse(course.id);
+      
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Вы записались на курс "${course.title}"'),
+            backgroundColor: Colors.green,
+            action: SnackBarAction(
+              label: 'Открыть',
+              textColor: Colors.white,
+              onPressed: onView,
+            ),
+          ),
+        );
+      }
+    } catch (error) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Ошибка записи: $error'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 } 

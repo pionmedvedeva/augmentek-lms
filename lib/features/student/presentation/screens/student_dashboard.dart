@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:miniapp/features/auth/providers/auth_provider.dart';
 import 'package:miniapp/features/auth/providers/user_provider.dart';
-import 'package:miniapp/features/course/providers/course_provider.dart';
+import 'package:miniapp/features/course/providers/enrollment_provider.dart';
 import 'package:miniapp/features/student/presentation/screens/student_homework_screen.dart';
 import 'package:miniapp/features/student/presentation/screens/student_course_view_screen.dart';
+import 'package:miniapp/features/student/presentation/screens/enrolled_courses_screen.dart';
 
 class StudentDashboard extends ConsumerWidget {
   const StudentDashboard({super.key});
@@ -12,7 +12,8 @@ class StudentDashboard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(userProvider);
-    final courses = ref.watch(activeCoursesProvider);
+    final enrolledCourses = ref.watch(enrolledCoursesProvider);
+    final nextLesson = ref.watch(nextLessonProvider);
 
     return user.when(
       data: (appUser) {
@@ -39,8 +40,8 @@ class StudentDashboard extends ConsumerWidget {
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                       colors: [
-                        Colors.deepPurple,
-                        Colors.purple.shade300,
+                        Color(0xFF4A90B8), // primaryBlue
+                        Color(0xFF87CEEB), // lightBlue
                       ],
                     ),
                   ),
@@ -124,7 +125,7 @@ class StudentDashboard extends ConsumerWidget {
                                       vertical: 2,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: Colors.orange,
+                                      color: Color(0xFFE8A87C), // accentOrange
                                       borderRadius: BorderRadius.circular(8),
                                     ),
                                     child: const Text(
@@ -143,7 +144,7 @@ class StudentDashboard extends ConsumerWidget {
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        'Готовы изучать что-то новое?',
+                        'Продолжим разбираться?',
                         style: TextStyle(
                           color: Colors.white.withOpacity(0.9),
                           fontSize: 16,
@@ -156,37 +157,45 @@ class StudentDashboard extends ConsumerWidget {
               
               const SizedBox(height: 24),
               
-              // Quick Stats
+              // Quick Actions
               Row(
                 children: [
                   Expanded(
-                    child: _buildStatCard(
+                    child: _buildActionCard(
+                      icon: Icons.play_arrow,
+                      title: 'Следующий урок',
+                      color: Color(0xFF4A90B8), // primaryBlue
+                      onTap: () => _navigateToNextLesson(context, nextLesson, ref),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _buildActionCard(
                       icon: Icons.school,
                       title: 'Курсы',
-                      value: courses.when(
-                        data: (courseList) => courseList.length.toString(),
-                        loading: () => '...',
-                        error: (_, __) => '0',
-                      ),
-                      color: Colors.blue,
+                      color: Color(0xFF87CEEB), // lightBlue
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => const EnrolledCoursesScreen(),
+                          ),
+                        );
+                      },
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: _buildStatCard(
-                      icon: Icons.play_circle,
-                      title: 'В процессе',
-                      value: '0', // TODO: Implement progress tracking
-                      color: Colors.green,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _buildStatCard(
-                      icon: Icons.check_circle,
-                      title: 'Завершено',
-                      value: '0', // TODO: Implement completion tracking
-                      color: Colors.orange,
+                    child: _buildActionCard(
+                      icon: Icons.assignment,
+                      title: 'Домашки',
+                      color: Color(0xFFE8A87C), // accentOrange
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => const StudentHomeworkScreen(),
+                          ),
+                        );
+                      },
                     ),
                   ),
                 ],
@@ -194,56 +203,19 @@ class StudentDashboard extends ConsumerWidget {
               
               const SizedBox(height: 16),
               
-              // Homework button
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => const StudentHomeworkScreen(),
-                      ),
-                    );
-                  },
-                  icon: const Icon(Icons.assignment_outlined),
-                  label: const Text('Мои домашние задания'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.deepPurple,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
+              // Current Course Section (replacing Popular Courses)
+              const Text(
+                'Продолжить обучение',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
                 ),
-              ),
-              
-              const SizedBox(height: 24),
-              
-              // Recent Courses Section
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Популярные курсы',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  TextButton(
-                    onPressed: () {
-                      // TODO: Navigate to all courses
-                    },
-                    child: const Text('Смотреть все'),
-                  ),
-                ],
               ),
               
               const SizedBox(height: 12),
               
-              // Courses Preview
-              courses.when(
+              // Active Course Preview
+              enrolledCourses.when(
                 data: (courseList) {
                   if (courseList.isEmpty) {
                     return Card(
@@ -258,16 +230,11 @@ class StudentDashboard extends ConsumerWidget {
                             ),
                             const SizedBox(height: 16),
                             const Text(
-                              'Курсы пока не добавлены',
+                              'Ты нигде не учишься. Выгляни в коридор, чтобы найти что-нибудь интересное!',
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w500,
                               ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Скоро здесь появятся интересные курсы!',
-                              style: TextStyle(color: Colors.grey[600]),
                               textAlign: TextAlign.center,
                             ),
                           ],
@@ -276,111 +243,98 @@ class StudentDashboard extends ConsumerWidget {
                     );
                   }
                   
-                  return SizedBox(
-                    height: 200,
-                    child: ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: courseList.take(5).length,
-                      itemBuilder: (context, index) {
-                        final course = courseList[index];
-                        return Container(
-                          width: 280,
-                          margin: const EdgeInsets.only(right: 12),
-                          child: Card(
-                            elevation: 2,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: InkWell(
-                              borderRadius: BorderRadius.circular(12),
-                              onTap: () {
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (context) => StudentCourseViewScreen(course: course),
-                                  ),
-                                );
-                              },
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Container(
-                                    height: 100,
-                                    decoration: BoxDecoration(
-                                      borderRadius: const BorderRadius.vertical(
-                                        top: Radius.circular(12),
-                                      ),
-                                      gradient: LinearGradient(
-                                        colors: [
-                                          Colors.deepPurple.withOpacity(0.8),
-                                          Colors.purple.withOpacity(0.6),
-                                        ],
-                                      ),
-                                    ),
-                                    child: course.imageUrl != null
-                                        ? ClipRRect(
-                                            borderRadius: const BorderRadius.vertical(
-                                              top: Radius.circular(12),
-                                            ),
-                                            child: Image.network(
-                                              course.imageUrl!,
-                                              fit: BoxFit.cover,
-                                              width: double.infinity,
-                                              errorBuilder: (context, error, stack) {
-                                                return const Center(
-                                                  child: Icon(
-                                                    Icons.school,
-                                                    color: Colors.white,
-                                                    size: 32,
-                                                  ),
-                                                );
-                                              },
-                                            ),
-                                          )
-                                        : const Center(
+                  // Show the most recent active course
+                  final activeCourse = courseList.first;
+                  return Card(
+                    elevation: 2,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(12),
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => StudentCourseViewScreen(course: activeCourse),
+                          ),
+                        );
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 60,
+                              height: 60,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(12),
+                                gradient: LinearGradient(
+                                  colors: [
+                                    Color(0xFF4A90B8).withOpacity(0.8), // primaryBlue
+                                    Color(0xFF87CEEB).withOpacity(0.6), // lightBlue
+                                  ],
+                                ),
+                              ),
+                              child: activeCourse.imageUrl != null
+                                  ? ClipRRect(
+                                      borderRadius: BorderRadius.circular(12),
+                                      child: Image.network(
+                                        activeCourse.imageUrl!,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (context, error, stack) {
+                                          return const Center(
                                             child: Icon(
                                               Icons.school,
                                               color: Colors.white,
-                                              size: 32,
+                                              size: 24,
                                             ),
-                                          ),
-                                  ),
-                                  Expanded(
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(12),
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            course.title,
-                                            style: const TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 14,
-                                            ),
-                                            maxLines: 2,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                          const SizedBox(height: 4),
-                                          Expanded(
-                                            child: Text(
-                                              course.description,
-                                              style: TextStyle(
-                                                color: Colors.grey[600],
-                                                fontSize: 12,
-                                              ),
-                                              maxLines: 2,
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                          ),
-                                        ],
+                                          );
+                                        },
+                                      ),
+                                    )
+                                  : const Center(
+                                      child: Icon(
+                                        Icons.school,
+                                        color: Colors.white,
+                                        size: 24,
                                       ),
                                     ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    activeCourse.title,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    activeCourse.description,
+                                    style: TextStyle(
+                                      color: Colors.grey[600],
+                                      fontSize: 14,
+                                    ),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ],
                               ),
                             ),
-                          ),
-                        );
-                      },
+                            const Icon(
+                              Icons.arrow_forward_ios,
+                              color: Colors.grey,
+                              size: 16,
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   );
                 },
@@ -426,46 +380,116 @@ class StudentDashboard extends ConsumerWidget {
     );
   }
 
-  Widget _buildStatCard({
+  Widget _buildActionCard({
     required IconData icon,
     required String title,
-    required String value,
     required Color color,
+    required VoidCallback onTap,
   }) {
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            Icon(
-              icon,
-              color: color,
-              size: 28,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              value,
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              Icon(
+                icon,
                 color: color,
+                size: 28,
               ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              title,
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey[600],
+              const SizedBox(height: 8),
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey[600],
+                ),
+                textAlign: TextAlign.center,
               ),
-              textAlign: TextAlign.center,
-            ),
-          ],
+            ],
+          ),
         ),
+      ),
+    );
+  }
+
+  void _navigateToNextLesson(BuildContext context, AsyncValue<Map<String, String>?> nextLesson, WidgetRef ref) {
+    nextLesson.when(
+      data: (lessonData) {
+        if (lessonData == null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Ты нигде не учишься. Выгляни в коридор, чтобы найти что-нибудь интересное!'),
+            ),
+          );
+          return;
+        }
+        
+        final courseId = lessonData['courseId']!;
+        final lessonId = lessonData['lessonId']!;
+        
+        // Найдем курс из записанных курсов
+        final enrolledCourses = ref.read(enrolledCoursesProvider);
+        enrolledCourses.when(
+          data: (courses) {
+            final course = courses.firstWhere((c) => c.id == courseId);
+            
+            if (lessonId.isEmpty) {
+              // Если нет последнего урока, открываем просто курс
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => StudentCourseViewScreen(course: course),
+                ),
+              );
+            } else {
+              // Если есть последний урок, показываем информацию и переходим к курсу
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Продолжаем изучение курса "${course.title}"'),
+                  action: SnackBarAction(
+                    label: 'Открыть',
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => StudentCourseViewScreen(course: course),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              );
+              
+              // Автоматически переходим к курсу через секунду
+              Future.delayed(const Duration(seconds: 1), () {
+                if (context.mounted) {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => StudentCourseViewScreen(course: course),
+                    ),
+                  );
+                }
+              });
+            }
+          },
+          loading: () => ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Загрузка курсов...')),
+          ),
+          error: (_, __) => ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Ошибка загрузки курса')),
+          ),
+        );
+      },
+      loading: () => ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Поиск следующего урока...')),
+      ),
+      error: (_, __) => ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Ошибка поиска следующего урока')),
       ),
     );
   }

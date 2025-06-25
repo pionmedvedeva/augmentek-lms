@@ -32,7 +32,13 @@ mixin _$HomeworkSubmission {
   String? get reviewedBy =>
       throw _privateConstructorUsedError; // ID админа который проверил
   DateTime get submittedAt => throw _privateConstructorUsedError;
-  DateTime? get reviewedAt => throw _privateConstructorUsedError;
+  DateTime? get reviewedAt =>
+      throw _privateConstructorUsedError; // Новые поля для файлов Telegram бота
+  String? get fileUrl =>
+      throw _privateConstructorUsedError; // URL файла в Firebase Storage
+  String? get fileName =>
+      throw _privateConstructorUsedError; // Оригинальное имя файла
+  DateTime? get fileUploadedAt => throw _privateConstructorUsedError;
 
   /// Serializes this HomeworkSubmission to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -61,7 +67,10 @@ abstract class $HomeworkSubmissionCopyWith<$Res> {
       String? adminComment,
       String? reviewedBy,
       DateTime submittedAt,
-      DateTime? reviewedAt});
+      DateTime? reviewedAt,
+      String? fileUrl,
+      String? fileName,
+      DateTime? fileUploadedAt});
 }
 
 /// @nodoc
@@ -90,6 +99,9 @@ class _$HomeworkSubmissionCopyWithImpl<$Res, $Val extends HomeworkSubmission>
     Object? reviewedBy = freezed,
     Object? submittedAt = null,
     Object? reviewedAt = freezed,
+    Object? fileUrl = freezed,
+    Object? fileName = freezed,
+    Object? fileUploadedAt = freezed,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -136,6 +148,18 @@ class _$HomeworkSubmissionCopyWithImpl<$Res, $Val extends HomeworkSubmission>
           ? _value.reviewedAt
           : reviewedAt // ignore: cast_nullable_to_non_nullable
               as DateTime?,
+      fileUrl: freezed == fileUrl
+          ? _value.fileUrl
+          : fileUrl // ignore: cast_nullable_to_non_nullable
+              as String?,
+      fileName: freezed == fileName
+          ? _value.fileName
+          : fileName // ignore: cast_nullable_to_non_nullable
+              as String?,
+      fileUploadedAt: freezed == fileUploadedAt
+          ? _value.fileUploadedAt
+          : fileUploadedAt // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
     ) as $Val);
   }
 }
@@ -159,7 +183,10 @@ abstract class _$$HomeworkSubmissionImplCopyWith<$Res>
       String? adminComment,
       String? reviewedBy,
       DateTime submittedAt,
-      DateTime? reviewedAt});
+      DateTime? reviewedAt,
+      String? fileUrl,
+      String? fileName,
+      DateTime? fileUploadedAt});
 }
 
 /// @nodoc
@@ -186,6 +213,9 @@ class __$$HomeworkSubmissionImplCopyWithImpl<$Res>
     Object? reviewedBy = freezed,
     Object? submittedAt = null,
     Object? reviewedAt = freezed,
+    Object? fileUrl = freezed,
+    Object? fileName = freezed,
+    Object? fileUploadedAt = freezed,
   }) {
     return _then(_$HomeworkSubmissionImpl(
       id: null == id
@@ -232,6 +262,18 @@ class __$$HomeworkSubmissionImplCopyWithImpl<$Res>
           ? _value.reviewedAt
           : reviewedAt // ignore: cast_nullable_to_non_nullable
               as DateTime?,
+      fileUrl: freezed == fileUrl
+          ? _value.fileUrl
+          : fileUrl // ignore: cast_nullable_to_non_nullable
+              as String?,
+      fileName: freezed == fileName
+          ? _value.fileName
+          : fileName // ignore: cast_nullable_to_non_nullable
+              as String?,
+      fileUploadedAt: freezed == fileUploadedAt
+          ? _value.fileUploadedAt
+          : fileUploadedAt // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
     ));
   }
 }
@@ -250,7 +292,10 @@ class _$HomeworkSubmissionImpl implements _HomeworkSubmission {
       this.adminComment,
       this.reviewedBy,
       required this.submittedAt,
-      this.reviewedAt});
+      this.reviewedAt,
+      this.fileUrl,
+      this.fileName,
+      this.fileUploadedAt});
 
   factory _$HomeworkSubmissionImpl.fromJson(Map<String, dynamic> json) =>
       _$$HomeworkSubmissionImplFromJson(json);
@@ -279,10 +324,19 @@ class _$HomeworkSubmissionImpl implements _HomeworkSubmission {
   final DateTime submittedAt;
   @override
   final DateTime? reviewedAt;
+// Новые поля для файлов Telegram бота
+  @override
+  final String? fileUrl;
+// URL файла в Firebase Storage
+  @override
+  final String? fileName;
+// Оригинальное имя файла
+  @override
+  final DateTime? fileUploadedAt;
 
   @override
   String toString() {
-    return 'HomeworkSubmission(id: $id, lessonId: $lessonId, courseId: $courseId, studentId: $studentId, studentName: $studentName, answer: $answer, status: $status, adminComment: $adminComment, reviewedBy: $reviewedBy, submittedAt: $submittedAt, reviewedAt: $reviewedAt)';
+    return 'HomeworkSubmission(id: $id, lessonId: $lessonId, courseId: $courseId, studentId: $studentId, studentName: $studentName, answer: $answer, status: $status, adminComment: $adminComment, reviewedBy: $reviewedBy, submittedAt: $submittedAt, reviewedAt: $reviewedAt, fileUrl: $fileUrl, fileName: $fileName, fileUploadedAt: $fileUploadedAt)';
   }
 
   @override
@@ -308,7 +362,12 @@ class _$HomeworkSubmissionImpl implements _HomeworkSubmission {
             (identical(other.submittedAt, submittedAt) ||
                 other.submittedAt == submittedAt) &&
             (identical(other.reviewedAt, reviewedAt) ||
-                other.reviewedAt == reviewedAt));
+                other.reviewedAt == reviewedAt) &&
+            (identical(other.fileUrl, fileUrl) || other.fileUrl == fileUrl) &&
+            (identical(other.fileName, fileName) ||
+                other.fileName == fileName) &&
+            (identical(other.fileUploadedAt, fileUploadedAt) ||
+                other.fileUploadedAt == fileUploadedAt));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -325,7 +384,10 @@ class _$HomeworkSubmissionImpl implements _HomeworkSubmission {
       adminComment,
       reviewedBy,
       submittedAt,
-      reviewedAt);
+      reviewedAt,
+      fileUrl,
+      fileName,
+      fileUploadedAt);
 
   /// Create a copy of HomeworkSubmission
   /// with the given fields replaced by the non-null parameter values.
@@ -356,7 +418,10 @@ abstract class _HomeworkSubmission implements HomeworkSubmission {
       final String? adminComment,
       final String? reviewedBy,
       required final DateTime submittedAt,
-      final DateTime? reviewedAt}) = _$HomeworkSubmissionImpl;
+      final DateTime? reviewedAt,
+      final String? fileUrl,
+      final String? fileName,
+      final DateTime? fileUploadedAt}) = _$HomeworkSubmissionImpl;
 
   factory _HomeworkSubmission.fromJson(Map<String, dynamic> json) =
       _$HomeworkSubmissionImpl.fromJson;
@@ -382,7 +447,13 @@ abstract class _HomeworkSubmission implements HomeworkSubmission {
   @override
   DateTime get submittedAt;
   @override
-  DateTime? get reviewedAt;
+  DateTime? get reviewedAt; // Новые поля для файлов Telegram бота
+  @override
+  String? get fileUrl; // URL файла в Firebase Storage
+  @override
+  String? get fileName; // Оригинальное имя файла
+  @override
+  DateTime? get fileUploadedAt;
 
   /// Create a copy of HomeworkSubmission
   /// with the given fields replaced by the non-null parameter values.

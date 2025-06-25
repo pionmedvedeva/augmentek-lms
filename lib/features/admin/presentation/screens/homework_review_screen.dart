@@ -29,7 +29,7 @@ class _HomeworkReviewScreenState extends ConsumerState<HomeworkReviewScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Проверка домашних заданий'),
-        backgroundColor: Colors.deepPurple,
+        backgroundColor: Color(0xFF4A90B8), // primaryBlue
         foregroundColor: Colors.white,
       ),
       body: pendingHomework.when(

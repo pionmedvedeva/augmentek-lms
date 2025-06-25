@@ -16,6 +16,10 @@ class AppUser with _$AppUser {
     String? languageCode,
     String? photoUrl,
     @Default(false) bool isAdmin,
+    @Default([]) List<String> enrolledCourses,
+    @Default({}) Map<String, double> courseProgress,
+    @Default({}) Map<String, DateTime> lastAccessedAt, // курс -> дата последнего доступа
+    @Default({}) Map<String, String> lastLessonId, // курс -> ID последнего урока
     @Default({}) Map<String, dynamic> settings,
     required DateTime createdAt,
     required DateTime updatedAt,
