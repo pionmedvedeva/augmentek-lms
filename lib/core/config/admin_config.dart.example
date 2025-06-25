@@ -1,0 +1,49 @@
+import 'package:miniapp/shared/models/user.dart';
+
+// Test user for development purposes when running outside of Telegram
+final mockUser = AppUser(
+  id: 12345678,
+  firebaseId: '12345678',
+  firstName: 'Dev',
+  lastName: 'User',
+  username: 'dev_user',
+  isAdmin: true,
+  createdAt: DateTime.now(),
+  updatedAt: DateTime.now(),
+);
+
+class AdminConfig {
+  // Список Telegram ID администраторов
+  // Чтобы добавить админа, просто добавьте его ID в этот список
+  static const List<int> adminIds = [
+    123456789, // Ваш Telegram ID
+    987654321, // ID другого админа
+    // Добавьте сюда реальные Telegram ID администраторов
+  ];
+
+  // Проверка, является ли пользователь админом по ID
+  static bool isAdmin(int userId) {
+    return adminIds.contains(userId);
+  }
+}
+
+/*
+ИНСТРУКЦИЯ ПО НАСТРОЙКЕ:
+
+1. Скопируйте этот файл как admin_config.dart:
+   cp lib/core/config/admin_config.dart.example lib/core/config/admin_config.dart
+
+2. Замените демонстрационные ID на реальные Telegram ID администраторов
+
+3. Файл admin_config.dart автоматически игнорируется Git'ом
+
+КАК УЗНАТЬ СВОЙ TELEGRAM ID:
+- Напишите боту @userinfobot в Telegram
+- Или используйте @getmyid_bot
+- ID выглядит как число, например: 142170313
+
+БЕЗОПАСНОСТЬ:
+- Никогда не коммитьте файл admin_config.dart с реальными ID
+- При деплое убедитесь что файл admin_config.dart существует на сервере
+- Для продакшена рассмотрите хранение админов в Firebase Firestore
+*/ 

@@ -53,6 +53,7 @@ lib/firebase_options.dart
 
 # Config files with sensitive data
 lib/config/telegram_config.dart
+lib/core/config/admin_config.dart
 
 # Firebase configuration
 lib/core/config/firebase_options.dart

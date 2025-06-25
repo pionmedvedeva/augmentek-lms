@@ -54,6 +54,23 @@ firebase functions:secrets:set BOT_TOKEN
 # При вводе укажите токен, полученный от @BotFather
 ```
 
+### 2.1. Настройка администраторов
+
+```bash
+# Скопируйте пример конфигурации
+cp lib/core/config/admin_config.dart.example lib/core/config/admin_config.dart
+
+# Отредактируйте файл и добавьте реальные Telegram ID администраторов
+nano lib/core/config/admin_config.dart
+```
+
+**Как узнать свой Telegram ID:**
+1. Напишите боту [@userinfobot](https://t.me/userinfobot) в Telegram
+2. Или используйте [@getmyid_bot](https://t.me/getmyid_bot)
+3. ID выглядит как число, например: `142170313`
+
+**⚠️ Важно:** Файл `admin_config.dart` содержит чувствительные данные и автоматически игнорируется Git'ом. Не коммитьте его в репозиторий!
+
 ### 3. Настройка WebApp
 
 ```bash
