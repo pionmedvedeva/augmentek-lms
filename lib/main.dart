@@ -84,9 +84,9 @@ void _initializeTelegramWebApp() {
     // Запрашиваем fullsize режим (не fullscreen!)
     webApp.expand();
     
-    // Настраиваем тему
-    webApp.setHeaderColor(const Color(0xFF673AB7)); // Deep Purple
-    webApp.setBackgroundColor(const Color(0xFFFFFFFF)); // White
+    // Настраиваем тему - используем наш фирменный голубой цвет
+    webApp.setHeaderColor(const Color(0xFF4A90B8)); // Augmentek Blue
+    webApp.setBackgroundColor(const Color(0xFFFFF8F0)); // Augmentek Peach Background
     
     // Показываем, что приложение готово
     webApp.ready();

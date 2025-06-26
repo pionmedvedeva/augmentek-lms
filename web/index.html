@@ -18,19 +18,19 @@
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="Augmentek - Инструменты усиления человеческого интеллекта">
+  <meta name="description" content="Augmentek - Система обучения и развития">
   
   <!-- Open Graph / Social Media meta tags -->
   <meta property="og:type" content="website">
   <meta property="og:title" content="Augmentek">
-  <meta property="og:description" content="Инструменты усиления человеческого интеллекта">
+  <meta property="og:description" content="Система обучения и развития">
   <meta property="og:url" content="https://augmentek-lms.web.app">
   <meta property="og:site_name" content="Augmentek">
   
   <!-- Twitter Card meta tags -->
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="Augmentek">
-  <meta name="twitter:description" content="Инструменты усиления человеческого интеллекта">
+  <meta name="twitter:description" content="Система обучения и развития">
   
   <!-- Additional SEO meta tags -->
   <meta name="author" content="Augmentek">
@@ -56,7 +56,7 @@
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
 
-  <title>Augmentek - Инструменты усиления человеческого интеллекта</title>
+  <title>Augmentek</title>
   <link rel="manifest" href="manifest.json">
   
   <style>
@@ -129,7 +129,7 @@
     "@context": "https://schema.org",
     "@type": "WebApplication",
     "name": "Augmentek",
-    "description": "Инструменты усиления человеческого интеллекта",
+    "description": "Система обучения и развития",
     "url": "https://augmentek-lms.web.app",
     "applicationCategory": "EducationalApplication",
     "operatingSystem": "Web",
@@ -166,6 +166,13 @@
           console.log('Initial viewport height:', webapp.viewportHeight);
           console.log('Window inner height:', window.innerHeight);
           
+          // Set Augmentek branding theme colors FIRST
+          webapp.setHeaderColor('#4A90B8'); // Augmentek Blue  
+          webapp.setBackgroundColor('#FFF8F0'); // Augmentek Peach
+          
+          // Try to set title (though Telegram may override this)
+          document.title = 'Augmentek';
+          
           // Request fullsize mode (not fullscreen)
           webapp.expand();
           webapp.ready();
@@ -174,6 +181,7 @@
           document.documentElement.style.setProperty('--tg-viewport-height', webapp.viewportHeight + 'px');
           
           console.log('After expand - viewport height:', webapp.viewportHeight);
+          console.log('Applied Augmentek theme colors');
           
           return true;
         } catch (e) {
