@@ -3,12 +3,13 @@
     "short_name": "Augmentek",
     "start_url": ".",
     "display": "fullscreen",
-    "background_color": "#673AB7",
-    "theme_color": "#673AB7",
+    "background_color": "#4A90B8",
+    "theme_color": "#4A90B8",
     "description": "Augmentek - Инструменты усиления человеческого интеллекта",
     "orientation": "any",
     "prefer_related_applications": false,
     "scope": "/",
     "categories": ["education", "productivity"],
-    "lang": "ru"
+    "lang": "ru",
+    "version": "2.1.0"
 }

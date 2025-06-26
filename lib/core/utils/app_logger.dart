@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import '../../shared/widgets/debug_log_screen.dart';
+import '../config/app_constants.dart';
 
 /// Уровни логирования для Telegram WebApp
 enum LogLevel { debug, info, warning, error }
@@ -98,15 +99,15 @@ class AppLogger {
   static void _saveToLocalStorage(String logMessage) {
     try {
       SharedPreferences.getInstance().then((prefs) {
-        final existingLogs = prefs.getStringList('app_logs') ?? [];
+        final existingLogs = prefs.getStringList(AppStorageKeys.debugLogs) ?? [];
         existingLogs.add(logMessage);
         
-        // Ограничиваем размер логов (последние 1000 записей)
-        if (existingLogs.length > 1000) {
-          existingLogs.removeRange(0, existingLogs.length - 1000);
+        // Ограничиваем размер логов (используем константу)
+        if (existingLogs.length > AppLimits.maxLogsToKeep) {
+          existingLogs.removeRange(0, existingLogs.length - AppLimits.maxLogsToKeep);
         }
         
-        prefs.setStringList('app_logs', existingLogs);
+        prefs.setStringList(AppStorageKeys.debugLogs, existingLogs);
       });
     } catch (e) {
       // Игнорируем ошибки сохранения в localStorage

@@ -8,6 +8,8 @@ import 'package:miniapp/core/theme/app_theme.dart';
 import 'package:miniapp/core/di/di.dart';
 import 'package:miniapp/core/utils/app_logger.dart';
 import 'package:miniapp/core/utils/remote_logger.dart';
+import 'package:miniapp/core/config/app_environment.dart';
+import 'package:miniapp/core/cache/app_cache.dart';
 import 'package:miniapp/features/auth/providers/auth_provider.dart';
 import 'package:miniapp/features/auth/providers/user_provider.dart';
 import 'package:miniapp/features/home/presentation/screens/home_screen.dart';
@@ -30,10 +32,27 @@ Future<void> main() async {
   // Создаем глобальный container
   _globalContainer = ProviderContainer();
   
+  // Log environment info early
+  AppLogger.info('🌍 Environment: ${EnvironmentConfig.current.name}');
+  AppLogger.info('🎯 App Version: ${EnvironmentConfig.appVersionString}');
+  if (EnvironmentConfig.enableDebugLogs) {
+    AppLogger.debug('📊 Debug Info: ${EnvironmentConfig.debugInfo}');
+  }
+  
   try {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
+    
+    AppLogger.info('🚀 Firebase initialized successfully');
+    
+    // Initialize cache system
+    try {
+      await AppCache.instance.initialize();
+      AppLogger.info('🗄️ Cache system initialized');
+    } catch (e) {
+      AppLogger.error('❌ Cache initialization failed: $e');
+    }
     
     // Initialize Telegram WebApp and expand to full screen
     _initializeTelegramWebApp();
@@ -49,6 +68,7 @@ Future<void> main() async {
       child: const AppInitializerWrapper(),
     ));
   } catch (e, stack) {
+    AppLogger.error('❌ Main initialization failed: $e');
     // Still run the app even if initialization fails
     runApp(ProviderScope(
       parent: _globalContainer,

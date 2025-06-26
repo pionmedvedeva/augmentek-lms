@@ -10,6 +10,8 @@ import 'package:miniapp/features/home/presentation/screens/home_screen.dart';
 import 'package:miniapp/features/auth/repositories/user_repository.dart';
 import 'package:miniapp/features/course/repositories/course_repository.dart';
 import 'package:cloud_functions/cloud_functions.dart';
+import '../config/app_environment.dart';
+import '../cache/app_cache.dart';
 
 final loggerProvider = Provider<Logger>((ref) {
   return Logger(
@@ -19,7 +21,6 @@ final loggerProvider = Provider<Logger>((ref) {
       lineLength: 120,
       colors: true,
       printEmojis: true,
-      printTime: true,
     ),
   );
 });
@@ -57,7 +58,22 @@ final routerProvider = Provider<GoRouter>((ref) {
 final themeModeProvider = StateProvider<ThemeMode>((ref) => ThemeMode.system);
 
 final firebaseFunctionsProvider = Provider<FirebaseFunctions>((ref) {
-  return FirebaseFunctions.instanceFor(region: 'us-central1');
+  return FirebaseFunctions.instanceFor(region: EnvironmentConfig.functionsRegion);
+});
+
+// Environment и Cache providers
+final environmentConfigProvider = Provider<EnvironmentConfig>((ref) {
+  return EnvironmentConfig();
+});
+
+final appCacheProvider = Provider<AppCache>((ref) {
+  return AppCache.instance;
+});
+
+// Инициализация AppCache
+final appCacheInitProvider = FutureProvider<void>((ref) async {
+  final cache = ref.read(appCacheProvider);
+  await cache.initialize();
 });
 
 final userRepositoryProvider = Provider<IUserRepository>((ref) {
