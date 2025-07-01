@@ -5,7 +5,7 @@ import 'package:miniapp/features/admin/presentation/widgets/user_card.dart';
 import 'package:miniapp/features/course/providers/course_provider.dart';
 import 'package:miniapp/shared/models/user.dart';
 import 'package:miniapp/shared/models/course.dart';
-import 'package:miniapp/shared/widgets/user_avatar.dart';
+import 'package:miniapp/shared/widgets/enhanced_user_avatar.dart';
 
 class UserListScreen extends ConsumerWidget {
   const UserListScreen({super.key});
@@ -134,9 +134,8 @@ class UserListScreen extends ConsumerWidget {
               const SizedBox(height: 20),
               Row(
                 children: [
-                  UserAvatar(
-                    photoUrl: user.photoUrl,
-                    firstName: user.firstName ?? '',
+                  EnhancedUserAvatar(
+                    user: user,
                     radius: 30,
                     backgroundColor: Color(0xFF4A90B8), // primaryBlue
                   ),

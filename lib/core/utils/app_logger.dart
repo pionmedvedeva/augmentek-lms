@@ -18,6 +18,15 @@ class AppLogger {
   static ProviderContainer? _globalContainer;
   static final List<String> _localLogs = [];
   
+  /// Проверка, включен ли debug режим
+  static bool get isDebugMode {
+    try {
+      return _globalContainer?.read(debugLogsProvider.notifier).isDebugMode ?? false;
+    } catch (e) {
+      return false;
+    }
+  }
+  
   /// Инициализация логгера с глобальным контейнером
   static void initialize(ProviderContainer container) {
     _globalContainer = container;

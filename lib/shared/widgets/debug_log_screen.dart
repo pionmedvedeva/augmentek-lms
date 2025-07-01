@@ -9,6 +9,9 @@ final debugLogsProvider = StateNotifierProvider<DebugLogsNotifier, List<String>>
 class DebugLogsNotifier extends StateNotifier<List<String>> {
   DebugLogsNotifier() : super([]);
 
+  /// Проверка, включен ли debug режим
+  bool get isDebugMode => true; // Всегда включен для отладки
+
   void addLog(String message) {
     final timestamp = DateTime.now().toString().substring(11, 19);
     state = [...state, '[$timestamp] $message'];

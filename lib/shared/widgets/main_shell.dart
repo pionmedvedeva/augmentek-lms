@@ -1,21 +1,73 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:miniapp/features/auth/providers/user_provider.dart';
 import 'package:miniapp/features/student/presentation/screens/student_dashboard.dart';
 import 'package:miniapp/features/course/presentation/screens/course_list_screen.dart';
 import 'package:miniapp/features/admin/presentation/screens/admin_dashboard.dart';
 import 'package:miniapp/shared/widgets/enhanced_user_avatar.dart';
+import 'package:miniapp/shared/widgets/debug_log_screen.dart';
+import 'package:miniapp/core/utils/app_logger.dart';
 import 'package:telegram_web_app/telegram_web_app.dart';
 
-class HomeScreen extends ConsumerStatefulWidget {
-  const HomeScreen({super.key});
+/// Основной Shell с постоянным нижним навбаром
+class MainShell extends ConsumerStatefulWidget {
+  final Widget child;
+  final String currentRoute;
+  final bool showBottomNav;
+  final bool showAvatar;
+
+  const MainShell({
+    super.key,
+    required this.child,
+    required this.currentRoute,
+    this.showBottomNav = true,
+    this.showAvatar = true,
+  });
 
   @override
-  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+  ConsumerState<MainShell> createState() => _MainShellState();
 }
 
-class _HomeScreenState extends ConsumerState<HomeScreen> {
+class _MainShellState extends ConsumerState<MainShell> {
   int _currentIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _updateCurrentIndex();
+  }
+
+  @override
+  void didUpdateWidget(MainShell oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.currentRoute != widget.currentRoute) {
+      _updateCurrentIndex();
+    }
+  }
+
+  void _updateCurrentIndex() {
+    // Определяем индекс на основе текущего маршрута
+    switch (widget.currentRoute) {
+      case '/home':
+      case '/student':
+      case '/student/courses':
+      case '/student/homework':
+        _currentIndex = 0;
+        break;
+      case '/courses':
+      case '/admin/courses':
+        _currentIndex = 1;
+        break;
+      case '/admin':
+      case '/admin/users':
+      case '/admin/homework':
+        _currentIndex = 2;
+        break;
+      default:
+        _currentIndex = 0;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -24,9 +76,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return user.when(
       data: (appUser) {
         if (appUser == null) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
+          return widget.child;
         }
 
         // Определяем список экранов в зависимости от роли пользователя
@@ -53,9 +103,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
         ];
 
-        return Scaffold(
-          appBar: AppBar(
+        // Определяем, показывать ли debug логи
+        final webApp = TelegramWebApp.instance;
+        final isInTelegram = webApp.initDataUnsafe?.user != null;
+        final shouldShowDebugPanel = AppLogger.isDebugMode || isInTelegram;
+
+        Widget mainContent = Scaffold(
+          appBar: widget.showAvatar ? AppBar(
             title: const Text('Augmentek'),
+            backgroundColor: const Color(0xFF4A90B8), // primaryBlue
+            foregroundColor: Colors.white,
+            automaticallyImplyLeading: false,
             actions: [
               // Аватар пользователя с прямым кликом
               Padding(
@@ -75,12 +133,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ),
               ),
             ],
-          ),
-          body: IndexedStack(
-            index: _currentIndex,
-            children: screens,
-          ),
-          bottomNavigationBar: Container(
+          ) : null,
+          body: widget.child,
+          bottomNavigationBar: widget.showBottomNav ? Container(
             margin: EdgeInsets.only(
               bottom: MediaQuery.of(context).padding.bottom > 0 ? 4 : 0,
             ),
@@ -90,6 +145,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 setState(() {
                   _currentIndex = index;
                 });
+                _navigateToTab(index, appUser);
               },
               type: BottomNavigationBarType.fixed,
               selectedItemColor: Theme.of(context).colorScheme.primary,
@@ -98,25 +154,53 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               elevation: 8,
               items: tabs,
             ),
-          ),
+          ) : null,
         );
-      },
-      loading: () => const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      ),
-      error: (error, stack) => Scaffold(
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+
+        // Добавляем плавающую дебаг иконку
+        if (shouldShowDebugPanel) {
+          mainContent = Stack(
             children: [
-              const Icon(Icons.error, size: 64, color: Colors.red),
-              const SizedBox(height: 16),
-              Text('Ошибка: $error'),
+              mainContent,
+              // Плавающая дебаг иконка
+              Positioned(
+                top: 16,
+                right: 16,
+                child: FloatingActionButton.small(
+                  onPressed: () => _showDebugLogs(context),
+                  backgroundColor: Colors.blue,
+                  foregroundColor: Colors.white,
+                  child: const Icon(Icons.bug_report),
+                ),
+              ),
             ],
-          ),
-        ),
-      ),
+          );
+        }
+
+        return mainContent;
+      },
+      loading: () => widget.child,
+      error: (error, stack) => widget.child,
     );
+  }
+
+  void _navigateToTab(int index, appUser) {
+    switch (index) {
+      case 0:
+        // Первый таб - всегда студенческая панель или домашняя страница
+        context.go('/home');
+        break;
+      case 1:
+        // Второй таб - курсы
+        context.go('/courses');
+        break;
+      case 2:
+        // Третий таб - только для админов
+        if (appUser.isAdmin) {
+          context.go('/admin');
+        }
+        break;
+    }
   }
 
   void _showUserProfile(BuildContext context, appUser) {
@@ -200,11 +284,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     color: Colors.grey[600],
                   ),
                   const SizedBox(width: 8),
-                  Text(
-                    'Telegram ID: ${appUser.id}',
-                    style: TextStyle(
-                      color: Colors.grey[600],
-                      fontSize: 12,
+                  Expanded(
+                    child: Text(
+                      'ID: ${appUser.id}',
+                      style: TextStyle(
+                        color: Colors.grey[600],
+                        fontSize: 12,
+                      ),
                     ),
                   ),
                 ],
@@ -218,6 +304,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             child: const Text('Закрыть'),
           ),
         ],
+      ),
+    );
+  }
+
+  void _showDebugLogs(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => const DebugLogScreen(
+        child: SizedBox.shrink(),
+        showLogs: true,
       ),
     );
   }

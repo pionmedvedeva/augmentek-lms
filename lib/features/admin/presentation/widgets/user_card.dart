@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:miniapp/shared/models/user.dart';
 import 'package:miniapp/features/course/providers/course_provider.dart';
-import 'package:miniapp/shared/widgets/user_avatar.dart';
+import 'package:miniapp/shared/widgets/enhanced_user_avatar.dart';
 
 class UserCard extends ConsumerWidget {
   final AppUser user;
@@ -32,9 +32,8 @@ class UserCard extends ConsumerWidget {
               Row(
                 children: [
                   // Аватар
-                  UserAvatar(
-                    photoUrl: user.photoUrl,
-                    firstName: user.firstName ?? '',
+                  EnhancedUserAvatar(
+                    user: user,
                     radius: 24,
                     backgroundColor: Color(0xFF4A90B8), // primaryBlue
                   ),

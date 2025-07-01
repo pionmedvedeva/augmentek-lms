@@ -5,7 +5,7 @@ import 'package:miniapp/features/course/providers/enrollment_provider.dart';
 import 'package:miniapp/features/student/presentation/screens/student_homework_screen.dart';
 import 'package:miniapp/features/student/presentation/screens/student_course_view_screen.dart';
 import 'package:miniapp/features/student/presentation/screens/enrolled_courses_screen.dart';
-import 'package:miniapp/shared/widgets/user_avatar.dart';
+import 'package:miniapp/shared/widgets/enhanced_user_avatar.dart';
 
 class StudentDashboard extends ConsumerWidget {
   const StudentDashboard({super.key});
@@ -52,9 +52,8 @@ class StudentDashboard extends ConsumerWidget {
                     children: [
                       Row(
                         children: [
-                          UserAvatar(
-                            photoUrl: appUser.photoUrl,
-                            firstName: appUser.firstName,
+                          EnhancedUserAvatar(
+                            user: appUser,
                             radius: 30,
                             backgroundColor: Colors.white.withOpacity(0.2),
                             textStyle: const TextStyle(

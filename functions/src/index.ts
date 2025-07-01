@@ -10,3 +10,12 @@ export * from "./bot-trigger";
 
 // Export logging functions for error handling
 export * from "./logging";
+
+// Export avatar proxy function
+export * from "./avatar-proxy";
+
+// Export image proxy function
+export * from "./image-proxy";
+
+// Export PDF converter functions
+export * from "./pdf-converter";

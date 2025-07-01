@@ -17,8 +17,12 @@ import 'package:miniapp/features/admin/presentation/screens/user_list_screen.dar
 import 'package:miniapp/features/admin/presentation/screens/user_profile_screen.dart';
 import 'package:miniapp/features/admin/presentation/screens/admin_dashboard.dart';
 import 'package:miniapp/features/course/presentation/screens/course_list_screen.dart';
+import 'package:miniapp/features/student/presentation/screens/student_dashboard.dart';
+import 'package:miniapp/features/student/presentation/screens/enrolled_courses_screen.dart';
+import 'package:miniapp/features/student/presentation/screens/student_homework_screen.dart';
 import 'package:miniapp/shared/widgets/error_widget.dart';
 import 'package:miniapp/shared/widgets/debug_log_screen.dart';
+import 'package:miniapp/shared/widgets/main_shell.dart';
 import 'package:url_strategy/url_strategy.dart';
 import 'package:telegram_web_app/telegram_web_app.dart';
 
@@ -107,26 +111,70 @@ final _router = GoRouter(
     ),
     GoRoute(
       path: '/home',
-      builder: (context, state) => const HomeScreen(),
+      builder: (context, state) => MainShell(
+        currentRoute: '/home',
+        child: const StudentDashboard(),
+      ),
+    ),
+    GoRoute(
+      path: '/courses',
+      builder: (context, state) => MainShell(
+        currentRoute: '/courses',
+        child: const CourseListScreen(),
+      ),
     ),
     GoRoute(
       path: '/admin',
-      builder: (context, state) => const AdminDashboard(),
+      builder: (context, state) => MainShell(
+        currentRoute: '/admin',
+        child: const AdminDashboard(),
+      ),
     ),
     GoRoute(
       path: '/admin/users',
-      builder: (context, state) => const UserListScreen(),
+      builder: (context, state) => MainShell(
+        currentRoute: '/admin/users',
+        child: const UserListScreen(),
+      ),
     ),
     GoRoute(
       path: '/admin/users/:userId',
       builder: (context, state) {
         final userId = state.pathParameters['userId']!;
-        return UserProfileScreen(userId: userId);
+        return MainShell(
+          currentRoute: '/admin/users',
+          child: UserProfileScreen(userId: userId),
+        );
       },
     ),
     GoRoute(
       path: '/admin/courses',
-      builder: (context, state) => const CourseListScreen(),
+      builder: (context, state) => MainShell(
+        currentRoute: '/admin/courses',
+        child: const CourseListScreen(),
+      ),
+    ),
+    // Дополнительные маршруты для студентов
+    GoRoute(
+      path: '/student',
+      builder: (context, state) => MainShell(
+        currentRoute: '/student',
+        child: const StudentDashboard(),
+      ),
+    ),
+    GoRoute(
+      path: '/student/courses',
+      builder: (context, state) => MainShell(
+        currentRoute: '/student/courses',
+        child: const EnrolledCoursesScreen(),
+      ),
+    ),
+    GoRoute(
+      path: '/student/homework',
+      builder: (context, state) => MainShell(
+        currentRoute: '/student/homework',
+        child: const StudentHomeworkScreen(),
+      ),
     ),
   ],
 );
@@ -239,7 +287,26 @@ class _AuthWrapperState extends ConsumerState<AuthWrapper> {
         mainContent = userState.when(
           data: (user) {
             if (user != null) {
-              return const HomeScreen();
+              // Перенаправляем на главную страницу в зависимости от роли
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (user.isAdmin) {
+                  context.go('/admin');
+                } else {
+                  context.go('/home');
+                }
+              });
+              return const Scaffold(
+                body: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      CircularProgressIndicator(),
+                      SizedBox(height: 16),
+                      Text('Перенаправление...'),
+                    ],
+                  ),
+                ),
+              );
             } else {
               // User authenticated but no user data, show loading
               return const Scaffold(
