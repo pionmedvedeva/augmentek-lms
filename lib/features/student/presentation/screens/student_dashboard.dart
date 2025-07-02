@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:miniapp/features/auth/providers/user_provider.dart';
 import 'package:miniapp/features/course/providers/enrollment_provider.dart';
 import 'package:miniapp/features/student/presentation/screens/student_homework_screen.dart';
@@ -140,11 +141,7 @@ class StudentDashboard extends ConsumerWidget {
                       title: 'Курсы',
                       color: Color(0xFF87CEEB), // lightBlue
                       onTap: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (context) => const EnrolledCoursesScreen(),
-                          ),
-                        );
+                        context.go('/student/courses');
                       },
                     ),
                   ),
@@ -155,11 +152,7 @@ class StudentDashboard extends ConsumerWidget {
                       title: 'Домашки',
                       color: Color(0xFFE8A87C), // accentOrange
                       onTap: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (context) => const StudentHomeworkScreen(),
-                          ),
-                        );
+                        context.go('/student/homework');
                       },
                     ),
                   ),
@@ -218,11 +211,7 @@ class StudentDashboard extends ConsumerWidget {
                     child: InkWell(
                       borderRadius: BorderRadius.circular(12),
                       onTap: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (context) => StudentCourseViewScreen(course: activeCourse),
-                          ),
-                        );
+                        context.go('/course/${activeCourse.id}', extra: activeCourse);
                       },
                       child: Padding(
                         padding: const EdgeInsets.all(16),
@@ -407,11 +396,7 @@ class StudentDashboard extends ConsumerWidget {
             
             if (lessonId.isEmpty) {
               // Если нет последнего урока, открываем просто курс
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => StudentCourseViewScreen(course: course),
-                ),
-              );
+              context.go('/course/${course.id}', extra: course);
             } else {
               // Если есть последний урок, показываем информацию и переходим к курсу
               ScaffoldMessenger.of(context).showSnackBar(
@@ -420,11 +405,7 @@ class StudentDashboard extends ConsumerWidget {
                   action: SnackBarAction(
                     label: 'Открыть',
                     onPressed: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) => StudentCourseViewScreen(course: course),
-                        ),
-                      );
+                      context.go('/course/${course.id}', extra: course);
                     },
                   ),
                 ),
@@ -433,11 +414,7 @@ class StudentDashboard extends ConsumerWidget {
               // Автоматически переходим к курсу через секунду
               Future.delayed(const Duration(seconds: 1), () {
                 if (context.mounted) {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => StudentCourseViewScreen(course: course),
-                    ),
-                  );
+                  context.go('/course/${course.id}', extra: course);
                 }
               });
             }

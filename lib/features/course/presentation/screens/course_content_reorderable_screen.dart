@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:miniapp/shared/models/course.dart';
 import 'package:miniapp/shared/models/section.dart';
 import 'package:miniapp/shared/models/lesson.dart';
@@ -8,11 +9,11 @@ import 'package:miniapp/features/course/providers/lesson_provider.dart';
 import 'package:miniapp/features/course/presentation/screens/lesson_edit_screen.dart';
 
 class CourseContentReorderableScreen extends ConsumerStatefulWidget {
-  final Course course;
+  final String courseId;
 
   const CourseContentReorderableScreen({
     super.key,
-    required this.course,
+    required this.courseId,
   });
 
   @override
@@ -24,12 +25,12 @@ class _CourseContentReorderableScreenState extends ConsumerState<CourseContentRe
 
   @override
   Widget build(BuildContext context) {
-    final sections = ref.watch(sectionProvider(widget.course.id));
-    final courseLessons = ref.watch(courseLessonsProvider(widget.course.id));
+    final sections = ref.watch(sectionProvider(widget.courseId));
+    final courseLessons = ref.watch(courseLessonsProvider(widget.courseId));
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Содержимое: ${widget.course.title}'),
+        title: const Text('Содержимое курса'),
         backgroundColor: Color(0xFF4A90B8), // primaryBlue
         foregroundColor: Colors.white,
         actions: [
@@ -105,24 +106,19 @@ class _CourseContentReorderableScreenState extends ConsumerState<CourseContentRe
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        // Информация о курсе
+        // Статистика курса
         Card(
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  widget.course.title,
-                  style: const TextStyle(
+                const Text(
+                  'Статистика курса',
+                  style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                   ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  widget.course.description,
-                  style: TextStyle(color: Colors.grey[600]),
                 ),
                 const SizedBox(height: 16),
                 Row(
@@ -363,7 +359,7 @@ class _CourseContentReorderableScreenState extends ConsumerState<CourseContentRe
     
     // Обновляем порядок
     final lessonIds = reorderedLessons.map((l) => l.id).toList();
-    ref.read(courseLessonsProvider(widget.course.id).notifier).reorderLessons(lessonIds);
+    ref.read(courseLessonsProvider(widget.courseId).notifier).reorderLessons(lessonIds);
   }
 
   void _reorderSections(WidgetRef ref, List<Section> sections, int oldIndex, int newIndex) {
@@ -375,7 +371,7 @@ class _CourseContentReorderableScreenState extends ConsumerState<CourseContentRe
     final section = reorderedSections.removeAt(oldIndex);
     reorderedSections.insert(newIndex, section);
     
-    ref.read(sectionProvider(widget.course.id).notifier).reorderSections(reorderedSections);
+    ref.read(sectionProvider(widget.courseId).notifier).reorderSections(reorderedSections);
   }
 
   void _reorderSectionLessons(WidgetRef ref, Section section, List<Lesson> lessons, int oldIndex, int newIndex) {
@@ -389,7 +385,7 @@ class _CourseContentReorderableScreenState extends ConsumerState<CourseContentRe
     
     // Обновляем порядок уроков в разделе
     final lessonIds = reorderedLessons.map((l) => l.id).toList();
-    ref.read(courseLessonsProvider(widget.course.id).notifier).reorderLessons(lessonIds);
+    ref.read(courseLessonsProvider(widget.courseId).notifier).reorderLessons(lessonIds);
   }
 
   Widget _buildStatChip(String label, String value, Color color) {
@@ -551,11 +547,7 @@ class _CourseContentReorderableScreenState extends ConsumerState<CourseContentRe
         ),
         onTap: () {
           // Открываем урок для просмотра
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (context) => LessonEditScreen(lesson: lesson),
-            ),
-          );
+          context.go('/admin/course/${widget.courseId}/lesson/${lesson.id}/edit');
         },
       ),
     );
@@ -600,7 +592,7 @@ class _CourseContentReorderableScreenState extends ConsumerState<CourseContentRe
             onPressed: () async {
               if (titleController.text.trim().isNotEmpty) {
                 try {
-                  await ref.read(sectionProvider(widget.course.id).notifier).createSection(
+                  await ref.read(sectionProvider(widget.courseId).notifier).createSection(
                     title: titleController.text.trim(),
                     description: descriptionController.text.trim().isEmpty 
                         ? null 
@@ -708,8 +700,8 @@ class _CourseContentReorderableScreenState extends ConsumerState<CourseContentRe
               if (titleController.text.trim().isNotEmpty && 
                   descriptionController.text.trim().isNotEmpty) {
                 try {
-                  await ref.read(courseLessonsProvider(widget.course.id).notifier).createLesson(
-                    courseId: widget.course.id,
+                  await ref.read(courseLessonsProvider(widget.courseId).notifier).createLesson(
+                    courseId: widget.courseId,
                     sectionId: sectionId,
                     title: titleController.text.trim(),
                     description: descriptionController.text.trim(),
@@ -784,7 +776,7 @@ class _CourseContentReorderableScreenState extends ConsumerState<CourseContentRe
             onPressed: () async {
               if (titleController.text.trim().isNotEmpty) {
                 try {
-                  await ref.read(sectionProvider(widget.course.id).notifier).updateSection(
+                  await ref.read(sectionProvider(widget.courseId).notifier).updateSection(
                     section.id,
                     title: titleController.text.trim(),
                     description: descriptionController.text.trim().isEmpty 
@@ -828,7 +820,7 @@ class _CourseContentReorderableScreenState extends ConsumerState<CourseContentRe
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () async {
               try {
-                await ref.read(sectionProvider(widget.course.id).notifier).deleteSection(section.id);
+                await ref.read(sectionProvider(widget.courseId).notifier).deleteSection(section.id);
                 if (context.mounted) {
                   Navigator.of(context).pop();
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -851,11 +843,7 @@ class _CourseContentReorderableScreenState extends ConsumerState<CourseContentRe
   }
 
   void _showEditLessonDialog(BuildContext context, WidgetRef ref, Lesson lesson) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => LessonEditScreen(lesson: lesson),
-      ),
-    );
+    context.go('/admin/course/${widget.courseId}/lesson/${lesson.id}/edit');
   }
 
   void _showDeleteLessonDialog(BuildContext context, WidgetRef ref, Lesson lesson) {
@@ -873,7 +861,7 @@ class _CourseContentReorderableScreenState extends ConsumerState<CourseContentRe
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () async {
               try {
-                await ref.read(courseLessonsProvider(widget.course.id).notifier).deleteLesson(lesson.id);
+                await ref.read(courseLessonsProvider(widget.courseId).notifier).deleteLesson(lesson.id);
                 if (context.mounted) {
                   Navigator.of(context).pop();
                   ScaffoldMessenger.of(context).showSnackBar(

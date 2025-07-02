@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:miniapp/shared/models/course.dart';
 import 'package:miniapp/shared/models/section.dart';
 import 'package:miniapp/shared/models/lesson.dart';
@@ -10,21 +11,21 @@ import 'package:miniapp/features/course/presentation/screens/lesson_view_screen.
 import 'package:miniapp/features/course/presentation/screens/course_content_reorderable_screen.dart';
 
 class CourseContentScreen extends ConsumerWidget {
-  final Course course;
+  final String courseId;
 
   const CourseContentScreen({
     super.key,
-    required this.course,
+    required this.courseId,
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final sections = ref.watch(sectionProvider(course.id));
-    final courseLessons = ref.watch(courseLessonsProvider(course.id));
+    final sections = ref.watch(sectionProvider(courseId));
+    final courseLessons = ref.watch(courseLessonsProvider(courseId));
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Содержимое: ${course.title}'),
+        title: Text('Содержимое курса'),
         backgroundColor: Color(0xFF4A90B8), // primaryBlue
         foregroundColor: Colors.white,
         actions: [
@@ -32,7 +33,7 @@ class CourseContentScreen extends ConsumerWidget {
             onPressed: () {
               Navigator.of(context).push(
                 MaterialPageRoute(
-                  builder: (context) => CourseContentReorderableScreen(course: course),
+                  builder: (context) => CourseContentReorderableScreen(courseId: courseId),
                 ),
               );
             },
@@ -94,24 +95,19 @@ class CourseContentScreen extends ConsumerWidget {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        // Информация о курсе
+        // Статистика курса
         Card(
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  course.title,
-                  style: const TextStyle(
+                const Text(
+                  'Статистика курса',
+                  style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                   ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  course.description,
-                  style: TextStyle(color: Colors.grey[600]),
                 ),
                 const SizedBox(height: 16),
                 Row(
@@ -443,11 +439,7 @@ class CourseContentScreen extends ConsumerWidget {
           ],
         ),
         onTap: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (context) => LessonViewScreen(lesson: lesson),
-            ),
-          );
+          context.go('/course/$courseId/lesson/${lesson.id}');
         },
       ),
     );
@@ -491,7 +483,7 @@ class CourseContentScreen extends ConsumerWidget {
             onPressed: () async {
               if (titleController.text.trim().isNotEmpty) {
                 try {
-                  await ref.read(sectionProvider(course.id).notifier).createSection(
+                  await ref.read(sectionProvider(courseId).notifier).createSection(
                     title: titleController.text.trim(),
                     description: descriptionController.text.trim().isEmpty 
                         ? null 
@@ -589,8 +581,8 @@ class CourseContentScreen extends ConsumerWidget {
               if (titleController.text.trim().isNotEmpty && 
                   descriptionController.text.trim().isNotEmpty) {
                 try {
-                  await ref.read(courseLessonsProvider(course.id).notifier).createLesson(
-                    courseId: course.id,
+                          await ref.read(courseLessonsProvider(courseId).notifier).createLesson(
+          courseId: courseId,
                     sectionId: sectionId,
                     title: titleController.text.trim(),
                     description: descriptionController.text.trim(),
@@ -662,7 +654,7 @@ class CourseContentScreen extends ConsumerWidget {
             onPressed: () async {
               if (titleController.text.trim().isNotEmpty) {
                 try {
-                  await ref.read(sectionProvider(course.id).notifier).updateSection(
+                  await ref.read(sectionProvider(courseId).notifier).updateSection(
                     section.id,
                     title: titleController.text.trim(),
                     description: descriptionController.text.trim().isEmpty 
@@ -706,7 +698,7 @@ class CourseContentScreen extends ConsumerWidget {
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () async {
               try {
-                await ref.read(sectionProvider(course.id).notifier).deleteSection(section.id);
+                await ref.read(sectionProvider(courseId).notifier).deleteSection(section.id);
                 if (context.mounted) {
                   Navigator.of(context).pop();
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -729,11 +721,7 @@ class CourseContentScreen extends ConsumerWidget {
   }
 
   void _showEditLessonDialog(BuildContext context, WidgetRef ref, Lesson lesson) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => LessonEditScreen(lesson: lesson),
-      ),
-    );
+    context.go('/admin/course/$courseId/lesson/${lesson.id}/edit');
   }
 
   void _showDeleteLessonDialog(BuildContext context, WidgetRef ref, Lesson lesson) {
@@ -751,7 +739,7 @@ class CourseContentScreen extends ConsumerWidget {
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () async {
               try {
-                await ref.read(courseLessonsProvider(course.id).notifier).deleteLesson(lesson.id);
+                await ref.read(courseLessonsProvider(courseId).notifier).deleteLesson(lesson.id);
                 if (context.mounted) {
                   Navigator.of(context).pop();
                   ScaffoldMessenger.of(context).showSnackBar(

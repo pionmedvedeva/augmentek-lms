@@ -4,19 +4,91 @@ import 'package:miniapp/shared/models/lesson.dart';
 import 'package:miniapp/features/course/providers/lesson_provider.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 
-class LessonEditScreen extends ConsumerStatefulWidget {
-  final Lesson lesson;
+class LessonEditScreen extends ConsumerWidget {
+  final String courseId;
+  final String lessonId;
 
   const LessonEditScreen({
+    super.key,
+    required this.courseId,
+    required this.lessonId,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final lessonAsync = ref.watch(lessonByIdProvider(lessonId));
+
+    return lessonAsync.when(
+      data: (lesson) {
+        if (lesson == null) {
+          return Scaffold(
+            appBar: AppBar(
+              title: const Text('Урок не найден'),
+              backgroundColor: const Color(0xFF4A90B8),
+              foregroundColor: Colors.white,
+            ),
+            body: const Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.error, size: 64, color: Colors.red),
+                  SizedBox(height: 16),
+                  Text('Урок не найден'),
+                ],
+              ),
+            ),
+          );
+        }
+        
+        return LessonEditFormScreen(lesson: lesson);
+      },
+      loading: () => Scaffold(
+        appBar: AppBar(
+          title: const Text('Загрузка...'),
+          backgroundColor: const Color(0xFF4A90B8),
+          foregroundColor: Colors.white,
+        ),
+        body: const Center(child: CircularProgressIndicator()),
+      ),
+      error: (error, stack) => Scaffold(
+        appBar: AppBar(
+          title: const Text('Ошибка'),
+          backgroundColor: const Color(0xFF4A90B8),
+          foregroundColor: Colors.white,
+        ),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.error, size: 64, color: Colors.red),
+              const SizedBox(height: 16),
+              Text('Ошибка загрузки урока: $error'),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () => ref.refresh(lessonByIdProvider(lessonId)),
+                child: const Text('Повторить'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class LessonEditFormScreen extends ConsumerStatefulWidget {
+  final Lesson lesson;
+
+  const LessonEditFormScreen({
     super.key,
     required this.lesson,
   });
 
   @override
-  ConsumerState<LessonEditScreen> createState() => _LessonEditScreenState();
+  ConsumerState<LessonEditFormScreen> createState() => _LessonEditFormScreenState();
 }
 
-class _LessonEditScreenState extends ConsumerState<LessonEditScreen> {
+class _LessonEditFormScreenState extends ConsumerState<LessonEditFormScreen> {
   late final TextEditingController _titleController;
   late final TextEditingController _descriptionController;
   late final TextEditingController _contentController;

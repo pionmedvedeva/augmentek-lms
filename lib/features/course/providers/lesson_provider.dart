@@ -197,6 +197,33 @@ class LessonNotifier extends StateNotifier<AsyncValue<List<Lesson>>> {
       throw Exception('Ошибка изменения порядка уроков: $error');
     }
   }
+
+  Future<Lesson?> getLessonById(String lessonId) async {
+    try {
+      _ref.read(debugLogsProvider.notifier).addLog('📖 Loading lesson by ID: $lessonId');
+      
+      final doc = await _firestore
+          .collection('lessons')
+          .doc(lessonId)
+          .get();
+
+      if (doc.exists) {
+        final lesson = Lesson.fromJson({
+          ...doc.data()!,
+          'id': doc.id,
+        });
+        
+        _ref.read(debugLogsProvider.notifier).addLog('✅ Loaded lesson: ${lesson.title}');
+        return lesson;
+      } else {
+        _ref.read(debugLogsProvider.notifier).addLog('❌ Lesson not found: $lessonId');
+        return null;
+      }
+    } catch (error) {
+      _ref.read(debugLogsProvider.notifier).addLog('❌ Error loading lesson: $error');
+      throw Exception('Ошибка загрузки урока: $error');
+    }
+  }
 }
 
 final lessonProvider = StateNotifierProvider<LessonNotifier, AsyncValue<List<Lesson>>>(
@@ -209,4 +236,9 @@ final courseLessonsProvider = StateNotifierProvider.family<LessonNotifier, Async
 
 final sectionLessonsProvider = StateNotifierProvider.family<LessonNotifier, AsyncValue<List<Lesson>>, String>(
   (ref, sectionId) => LessonNotifier(ref, sectionId: sectionId),
-); 
+);
+
+final lessonByIdProvider = FutureProvider.family<Lesson?, String>((ref, lessonId) async {
+  final notifier = LessonNotifier(ref);
+  return await notifier.getLessonById(lessonId);
+}); 

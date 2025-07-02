@@ -20,6 +20,11 @@ import 'package:miniapp/features/course/presentation/screens/course_list_screen.
 import 'package:miniapp/features/student/presentation/screens/student_dashboard.dart';
 import 'package:miniapp/features/student/presentation/screens/enrolled_courses_screen.dart';
 import 'package:miniapp/features/student/presentation/screens/student_homework_screen.dart';
+import 'package:miniapp/features/student/presentation/screens/student_course_view_screen.dart';
+import 'package:miniapp/features/course/presentation/screens/lesson_view_screen.dart';
+import 'package:miniapp/features/course/presentation/screens/course_content_screen.dart';
+import 'package:miniapp/features/course/presentation/screens/lesson_edit_screen.dart';
+import 'package:miniapp/shared/models/course.dart';
 import 'package:miniapp/shared/widgets/error_widget.dart';
 import 'package:miniapp/shared/widgets/debug_log_screen.dart';
 import 'package:miniapp/shared/widgets/main_shell.dart';
@@ -175,6 +180,58 @@ final _router = GoRouter(
         currentRoute: '/student/homework',
         child: const StudentHomeworkScreen(),
       ),
+    ),
+    // Маршруты для просмотра курсов и уроков
+    GoRoute(
+      path: '/course/:courseId',
+      builder: (context, state) {
+        final courseId = state.pathParameters['courseId']!;
+        final course = state.extra as Course?;
+        return MainShell(
+          currentRoute: '/courses',
+          child: course != null
+              ? StudentCourseViewScreen(course: course)
+              : const Center(child: Text('Курс не найден')),
+        );
+      },
+    ),
+    GoRoute(
+      path: '/course/:courseId/lesson/:lessonId',
+      builder: (context, state) {
+        final courseId = state.pathParameters['courseId']!;
+        final lessonId = state.pathParameters['lessonId']!;
+        return MainShell(
+          currentRoute: '/courses',
+          child: LessonViewByIdScreen(
+            courseId: courseId,
+            lessonId: lessonId,
+          ),
+        );
+      },
+    ),
+    GoRoute(
+      path: '/admin/course/:courseId/edit',
+      builder: (context, state) {
+        final courseId = state.pathParameters['courseId']!;
+        return MainShell(
+          currentRoute: '/admin',
+          child: CourseContentScreen(courseId: courseId),
+        );
+      },
+    ),
+    GoRoute(
+      path: '/admin/course/:courseId/lesson/:lessonId/edit',
+      builder: (context, state) {
+        final courseId = state.pathParameters['courseId']!;
+        final lessonId = state.pathParameters['lessonId']!;
+        return MainShell(
+          currentRoute: '/admin',
+          child: LessonEditScreen(
+            courseId: courseId,
+            lessonId: lessonId,
+          ),
+        );
+      },
     ),
   ],
 );

@@ -6,6 +6,7 @@ import 'package:miniapp/shared/models/homework_submission.dart';
 import 'package:miniapp/features/auth/providers/user_provider.dart';
 import 'package:miniapp/features/course/providers/homework_provider.dart';
 import 'package:miniapp/features/course/providers/enrollment_provider.dart';
+import 'package:miniapp/features/course/providers/lesson_provider.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 
 class LessonViewScreen extends ConsumerStatefulWidget {
@@ -532,5 +533,81 @@ class _LessonViewScreenState extends ConsumerState<LessonViewScreen> {
       case HomeworkStatus.needsWork:
         return 'Требует доработки';
     }
+  }
+}
+
+// Новый класс для загрузки урока по ID
+class LessonViewByIdScreen extends ConsumerWidget {
+  final String courseId;
+  final String lessonId;
+
+  const LessonViewByIdScreen({
+    super.key,
+    required this.courseId,
+    required this.lessonId,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final lessonAsync = ref.watch(lessonByIdProvider(lessonId));
+
+    return lessonAsync.when(
+      data: (lesson) {
+        if (lesson == null) {
+          return Scaffold(
+            appBar: AppBar(
+              title: const Text('Урок не найден'),
+              backgroundColor: const Color(0xFF4A90B8),
+              foregroundColor: Colors.white,
+            ),
+            body: const Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.error, size: 64, color: Colors.red),
+                  SizedBox(height: 16),
+                  Text('Урок не найден'),
+                ],
+              ),
+            ),
+          );
+        }
+        
+        return LessonViewScreen(
+          lesson: lesson,
+          courseId: courseId,
+        );
+      },
+      loading: () => Scaffold(
+        appBar: AppBar(
+          title: const Text('Загрузка...'),
+          backgroundColor: const Color(0xFF4A90B8),
+          foregroundColor: Colors.white,
+        ),
+        body: const Center(child: CircularProgressIndicator()),
+      ),
+      error: (error, stack) => Scaffold(
+        appBar: AppBar(
+          title: const Text('Ошибка'),
+          backgroundColor: const Color(0xFF4A90B8),
+          foregroundColor: Colors.white,
+        ),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.error, size: 64, color: Colors.red),
+              const SizedBox(height: 16),
+              Text('Ошибка загрузки урока: $error'),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () => ref.refresh(lessonByIdProvider(lessonId)),
+                child: const Text('Повторить'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 } 

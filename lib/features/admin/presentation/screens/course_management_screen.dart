@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:miniapp/features/course/providers/course_provider.dart';
 import 'package:miniapp/features/admin/presentation/widgets/create_course_dialog.dart';
 import 'package:miniapp/features/admin/presentation/widgets/course_card.dart';
@@ -89,11 +90,7 @@ class CourseManagementScreen extends ConsumerWidget {
   }
 
   void _navigateToCourseContent(BuildContext context, course) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => CourseContentScreen(course: course),
-      ),
-    );
+    context.go('/admin/course/${course.id}/edit');
   }
 
   void _showCreateCourseDialog(BuildContext context, WidgetRef ref) {
