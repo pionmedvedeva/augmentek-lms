@@ -10,6 +10,13 @@ import 'package:miniapp/features/course/presentation/screens/lesson_edit_screen.
 import 'package:miniapp/features/course/presentation/screens/lesson_view_screen.dart';
 import 'package:miniapp/features/course/presentation/screens/course_content_reorderable_screen.dart';
 
+final editingSectionIdProvider = StateProvider<String?>((ref) => null);
+final editingLessonIdProvider = StateProvider<String?>((ref) => null);
+
+enum EditStatus { idle, loading, success, error }
+final sectionEditStatusProvider = StateProvider<Map<String, EditStatus>>((ref) => {});
+final lessonEditStatusProvider = StateProvider<Map<String, EditStatus>>((ref) => {});
+
 class CourseContentScreen extends ConsumerWidget {
   final String courseId;
 
@@ -112,8 +119,31 @@ class CourseContentScreen extends ConsumerWidget {
   }
 
   Widget _buildSectionTile(BuildContext context, WidgetRef ref, Section section, List<Lesson> allLessons, int index, Key key) {
+    final editingSectionId = ref.watch(editingSectionIdProvider);
+    final isEditing = editingSectionId == section.id;
     final sectionLessons = List<Lesson>.from(allLessons.where((l) => l.sectionId == section.id))
       ..sort((a, b) => a.order.compareTo(b.order));
+    final titleController = TextEditingController(text: section.title);
+    final editStatus = ref.watch(sectionEditStatusProvider)[section.id] ?? EditStatus.idle;
+    Future<void> saveTitle() async {
+      final newTitle = titleController.text.trim();
+      if (newTitle.isNotEmpty && newTitle != section.title) {
+        ref.read(sectionEditStatusProvider.notifier).update((map) => {...map, section.id: EditStatus.loading});
+        try {
+          await ref.read(sectionProvider(courseId).notifier).updateSectionTitle(section.id, newTitle);
+          ref.read(sectionEditStatusProvider.notifier).update((map) => {...map, section.id: EditStatus.success});
+          await Future.delayed(const Duration(seconds: 1));
+          ref.read(sectionEditStatusProvider.notifier).update((map) => {...map, section.id: EditStatus.idle});
+          ref.read(editingSectionIdProvider.notifier).state = null;
+        } catch (e) {
+          ref.read(sectionEditStatusProvider.notifier).update((map) => {...map, section.id: EditStatus.error});
+          await Future.delayed(const Duration(seconds: 2));
+          ref.read(sectionEditStatusProvider.notifier).update((map) => {...map, section.id: EditStatus.idle});
+        }
+      } else {
+        ref.read(editingSectionIdProvider.notifier).state = null;
+      }
+    }
     return Card(
       key: key,
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -130,15 +160,46 @@ class CourseContentScreen extends ConsumerWidget {
                 ),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: Text(
-                    section.title,
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                  ),
+                  child: isEditing
+                    ? Focus(
+                        onFocusChange: (hasFocus) async {
+                          if (!hasFocus) await saveTitle();
+                        },
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                controller: titleController,
+                                autofocus: true,
+                                onSubmitted: (_) async => await saveTitle(),
+                                decoration: const InputDecoration(
+                                  isDense: true,
+                                  border: OutlineInputBorder(),
+                                  contentPadding: EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            if (editStatus == EditStatus.loading)
+                              const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                            else if (editStatus == EditStatus.success)
+                              const Icon(Icons.check_circle, color: Colors.green)
+                            else if (editStatus == EditStatus.error)
+                              const Icon(Icons.error, color: Colors.red)
+                          ],
+                        ),
+                      )
+                    : Text(
+                        section.title,
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      ),
                 ),
                 IconButton(
                   icon: const Icon(Icons.edit, color: Colors.blue),
                   tooltip: 'Редактировать раздел',
-                  onPressed: () => _showEditSectionDialog(context, ref, section),
+                  onPressed: () {
+                    ref.read(editingSectionIdProvider.notifier).state = section.id;
+                  },
                 ),
                 IconButton(
                   icon: const Icon(Icons.delete, color: Colors.red),
@@ -202,13 +263,65 @@ class CourseContentScreen extends ConsumerWidget {
   }
 
   Widget _buildLessonTile(BuildContext context, WidgetRef ref, Lesson lesson, int index, Key key) {
+    final editingLessonId = ref.watch(editingLessonIdProvider);
+    final isEditing = editingLessonId == lesson.id;
+    final titleController = TextEditingController(text: lesson.title);
+    final editStatus = ref.watch(lessonEditStatusProvider)[lesson.id] ?? EditStatus.idle;
+    Future<void> saveTitle() async {
+      final newTitle = titleController.text.trim();
+      if (newTitle.isNotEmpty && newTitle != lesson.title) {
+        ref.read(lessonEditStatusProvider.notifier).update((map) => {...map, lesson.id: EditStatus.loading});
+        try {
+          await ref.read(courseLessonsProvider(courseId).notifier).updateLessonTitle(lesson.id, newTitle);
+          ref.read(lessonEditStatusProvider.notifier).update((map) => {...map, lesson.id: EditStatus.success});
+          await Future.delayed(const Duration(seconds: 1));
+          ref.read(lessonEditStatusProvider.notifier).update((map) => {...map, lesson.id: EditStatus.idle});
+          ref.read(editingLessonIdProvider.notifier).state = null;
+        } catch (e) {
+          ref.read(lessonEditStatusProvider.notifier).update((map) => {...map, lesson.id: EditStatus.error});
+          await Future.delayed(const Duration(seconds: 2));
+          ref.read(lessonEditStatusProvider.notifier).update((map) => {...map, lesson.id: EditStatus.idle});
+        }
+      } else {
+        ref.read(editingLessonIdProvider.notifier).state = null;
+      }
+    }
     return ListTile(
       key: key,
       leading: ReorderableDragStartListener(
         index: index,
         child: const Icon(Icons.drag_indicator, color: Colors.grey),
       ),
-      title: Text(lesson.title),
+      title: isEditing
+        ? Focus(
+            onFocusChange: (hasFocus) async {
+              if (!hasFocus) await saveTitle();
+            },
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: titleController,
+                    autofocus: true,
+                    onSubmitted: (_) async => await saveTitle(),
+                    decoration: const InputDecoration(
+                      isDense: true,
+                      border: OutlineInputBorder(),
+                      contentPadding: EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                if (editStatus == EditStatus.loading)
+                  const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                else if (editStatus == EditStatus.success)
+                  const Icon(Icons.check_circle, color: Colors.green)
+                else if (editStatus == EditStatus.error)
+                  const Icon(Icons.error, color: Colors.red)
+              ],
+            ),
+          )
+        : Text(lesson.title),
       subtitle: Text(lesson.description),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
@@ -216,7 +329,9 @@ class CourseContentScreen extends ConsumerWidget {
           IconButton(
             icon: const Icon(Icons.edit, color: Colors.blue),
             tooltip: 'Редактировать урок',
-            onPressed: () => _showEditLessonDialog(context, ref, lesson),
+            onPressed: () {
+              ref.read(editingLessonIdProvider.notifier).state = lesson.id;
+            },
           ),
           IconButton(
             icon: const Icon(Icons.delete, color: Colors.red),
@@ -228,7 +343,7 @@ class CourseContentScreen extends ConsumerWidget {
       visualDensity: VisualDensity.compact,
       contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
       onTap: () {
-        context.go('/course/$courseId/lesson/${lesson.id}');
+        context.go('/admin/course/$courseId/lesson/${lesson.id}/edit');
       },
     );
   }
@@ -435,73 +550,6 @@ class CourseContentScreen extends ConsumerWidget {
     );
   }
 
-  void _showEditSectionDialog(BuildContext context, WidgetRef ref, Section section) {
-    final titleController = TextEditingController(text: section.title);
-    final descriptionController = TextEditingController(text: section.description ?? '');
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Редактировать раздел'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: titleController,
-              decoration: const InputDecoration(
-                labelText: 'Название раздела',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: descriptionController,
-              decoration: const InputDecoration(
-                labelText: 'Описание',
-                border: OutlineInputBorder(),
-              ),
-              maxLines: 3,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Отмена'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              if (titleController.text.trim().isNotEmpty) {
-                try {
-                  await ref.read(sectionProvider(courseId).notifier).updateSection(
-                    section.id,
-                    title: titleController.text.trim(),
-                    description: descriptionController.text.trim().isEmpty 
-                        ? null 
-                        : descriptionController.text.trim(),
-                  );
-                  if (context.mounted) {
-                    Navigator.of(context).pop();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Раздел обновлен')),
-                    );
-                  }
-                } catch (error) {
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Ошибка обновления: $error')),
-                    );
-                  }
-                }
-              }
-            },
-            child: const Text('Сохранить'),
-          ),
-        ],
-      ),
-    );
-  }
-
   void _showDeleteSectionDialog(BuildContext context, WidgetRef ref, Section section) {
     showDialog(
       context: context,
@@ -537,10 +585,6 @@ class CourseContentScreen extends ConsumerWidget {
         ],
       ),
     );
-  }
-
-  void _showEditLessonDialog(BuildContext context, WidgetRef ref, Lesson lesson) {
-    context.go('/admin/course/$courseId/lesson/${lesson.id}/edit');
   }
 
   void _showDeleteLessonDialog(BuildContext context, WidgetRef ref, Lesson lesson) {

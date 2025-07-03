@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:miniapp/shared/models/lesson.dart';
 import 'package:miniapp/features/course/providers/lesson_provider.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
+import 'package:miniapp/shared/models/course.dart';
+import 'package:miniapp/features/course/providers/course_provider.dart';
+import 'package:go_router/go_router.dart';
 
 class LessonEditScreen extends ConsumerWidget {
   final String courseId;
@@ -21,55 +24,34 @@ class LessonEditScreen extends ConsumerWidget {
     return lessonAsync.when(
       data: (lesson) {
         if (lesson == null) {
-          return Scaffold(
-            appBar: AppBar(
-              title: const Text('Урок не найден'),
-              backgroundColor: const Color(0xFF4A90B8),
-              foregroundColor: Colors.white,
-            ),
-            body: const Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.error, size: 64, color: Colors.red),
-                  SizedBox(height: 16),
-                  Text('Урок не найден'),
-                ],
-              ),
+          return const Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.error, size: 64, color: Colors.red),
+                SizedBox(height: 16),
+                Text('Урок не найден'),
+              ],
             ),
           );
         }
-        
+        // Только контент урока и кнопка 'Сохранить', без AppBar/breadcrumbs
         return LessonEditFormScreen(lesson: lesson);
       },
-      loading: () => Scaffold(
-        appBar: AppBar(
-          title: const Text('Загрузка...'),
-          backgroundColor: const Color(0xFF4A90B8),
-          foregroundColor: Colors.white,
-        ),
-        body: const Center(child: CircularProgressIndicator()),
-      ),
-      error: (error, stack) => Scaffold(
-        appBar: AppBar(
-          title: const Text('Ошибка'),
-          backgroundColor: const Color(0xFF4A90B8),
-          foregroundColor: Colors.white,
-        ),
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.error, size: 64, color: Colors.red),
-              const SizedBox(height: 16),
-              Text('Ошибка загрузки урока: $error'),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () => ref.refresh(lessonByIdProvider(lessonId)),
-                child: const Text('Повторить'),
-              ),
-            ],
-          ),
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (error, stack) => Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.error, size: 64, color: Colors.red),
+            SizedBox(height: 16),
+            Text('Ошибка загрузки урока: $error'),
+            SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () => ref.refresh(lessonByIdProvider(lessonId)),
+              child: const Text('Повторить'),
+            ),
+          ],
         ),
       ),
     );
@@ -212,32 +194,19 @@ class _LessonEditFormScreenState extends ConsumerState<LessonEditFormScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Редактировать урок'),
-                    backgroundColor: Color(0xFF4A90B8), // primaryBlue
-        foregroundColor: Colors.white,
-        actions: [
-          TextButton(
-            onPressed: _isLoading ? null : _saveLesson,
-            child: _isLoading
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                    ),
-                  )
-                : const Text(
-                    'Сохранить',
-                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                  ),
-          ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+    final coursesAsync = ref.watch(courseProvider);
+    Course? course;
+    final list = coursesAsync.asData?.value;
+    if (list != null) {
+      try {
+        course = list.firstWhere((c) => c.id == widget.lesson.courseId);
+      } catch (_) {
+        course = null;
+      }
+    }
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -249,9 +218,7 @@ class _LessonEditFormScreenState extends ConsumerState<LessonEditFormScreen> {
                 border: OutlineInputBorder(),
               ),
             ),
-            
             const SizedBox(height: 16),
-            
             // Краткое описание
             TextField(
               controller: _descriptionController,
@@ -261,9 +228,7 @@ class _LessonEditFormScreenState extends ConsumerState<LessonEditFormScreen> {
               ),
               maxLines: 2,
             ),
-            
             const SizedBox(height: 16),
-            
             // Длительность
             TextField(
               controller: _durationController,
@@ -273,9 +238,7 @@ class _LessonEditFormScreenState extends ConsumerState<LessonEditFormScreen> {
               ),
               keyboardType: TextInputType.number,
             ),
-            
             const SizedBox(height: 24),
-            
             // Основной контент урока
             const Text(
               'Содержание урока',
@@ -290,13 +253,10 @@ class _LessonEditFormScreenState extends ConsumerState<LessonEditFormScreen> {
               decoration: const InputDecoration(
                 labelText: 'Текст урока',
                 border: OutlineInputBorder(),
-                hintText: 'Введите полный текст урока...',
               ),
-              maxLines: 10,
+              maxLines: 8,
             ),
-            
-            const SizedBox(height: 24),
-            
+            const SizedBox(height: 16),
             // Видео
             const Text(
               'Видео урока',
@@ -314,9 +274,7 @@ class _LessonEditFormScreenState extends ConsumerState<LessonEditFormScreen> {
                 hintText: 'https://www.youtube.com/watch?v=...',
               ),
             ),
-            
             const SizedBox(height: 16),
-            
             // Превью видео
             if (_youtubeController != null) ...[
               Container(
@@ -341,7 +299,6 @@ class _LessonEditFormScreenState extends ConsumerState<LessonEditFormScreen> {
               ),
               const SizedBox(height: 24),
             ],
-            
             // Домашнее задание
             const Text(
               'Домашнее задание',
@@ -360,9 +317,7 @@ class _LessonEditFormScreenState extends ConsumerState<LessonEditFormScreen> {
               ),
               maxLines: 4,
             ),
-            
             const SizedBox(height: 16),
-            
             TextField(
               controller: _homeworkAnswerController,
               decoration: const InputDecoration(
@@ -372,11 +327,54 @@ class _LessonEditFormScreenState extends ConsumerState<LessonEditFormScreen> {
               ),
               maxLines: 4,
             ),
-            
             const SizedBox(height: 32),
+            // Кнопка 'Сохранить'
+            Align(
+              alignment: Alignment.centerRight,
+              child: ElevatedButton(
+                onPressed: _isLoading ? null : _saveLesson,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF4A90B8),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                ),
+                child: _isLoading
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
+                      )
+                    : const Text(
+                        'Сохранить',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+              ),
+            ),
           ],
         ),
       ),
     );
+  }
+}
+
+class CourseBreadcrumbs extends StatelessWidget {
+  final String courseTitle;
+  final VoidCallback? onCourseTap;
+  final String? lessonTitle;
+  final Widget? trailing;
+  const CourseBreadcrumbs({
+    super.key,
+    required this.courseTitle,
+    this.onCourseTap,
+    this.lessonTitle,
+    this.trailing,
+  });
+  @override
+  Widget build(BuildContext context) {
+    // Удаляю breadcrumbs, теперь они только глобальные в AppShell
+    return const SizedBox.shrink();
   }
 } 

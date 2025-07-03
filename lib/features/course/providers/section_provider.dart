@@ -137,6 +137,21 @@ class SectionNotifier extends StateNotifier<AsyncValue<List<Section>>> {
       rethrow;
     }
   }
+
+  Future<void> updateSectionTitle(String sectionId, String newTitle) async {
+    try {
+      _ref.read(debugLogsProvider.notifier).addLog('✏️ Updating section title: $sectionId');
+      await _firestore.collection('sections').doc(sectionId).update({
+        'title': newTitle,
+        'updatedAt': DateTime.now().toIso8601String(),
+      });
+      _ref.read(debugLogsProvider.notifier).addLog('✅ Section title updated');
+      await loadSections();
+    } catch (error) {
+      _ref.read(debugLogsProvider.notifier).addLog('❌ Error updating section title: $error');
+      rethrow;
+    }
+  }
 }
 
 // Провайдер для разделов конкретного курса

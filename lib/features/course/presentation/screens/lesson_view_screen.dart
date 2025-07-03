@@ -101,11 +101,6 @@ class _LessonViewScreenState extends ConsumerState<LessonViewScreen> {
     final user = ref.watch(userProvider).value;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.lesson.title),
-        backgroundColor: Color(0xFF4A90B8), // primaryBlue
-        foregroundColor: Colors.white,
-      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(

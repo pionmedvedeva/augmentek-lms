@@ -239,6 +239,34 @@ class LessonNotifier extends StateNotifier<AsyncValue<List<Lesson>>> {
       throw Exception('Ошибка загрузки урока: $error');
     }
   }
+
+  Future<void> updateLessonTitle(String lessonId, String newTitle) async {
+    try {
+      _ref.read(debugLogsProvider.notifier).addLog('✏️ Updating lesson title: $lessonId');
+      await _firestore.collection('lessons').doc(lessonId).update({
+        'title': newTitle,
+        'updatedAt': DateTime.now().toIso8601String(),
+      });
+      _ref.read(debugLogsProvider.notifier).addLog('✅ Lesson title updated');
+      // Определяем, какой reload нужен
+      final current = state.value;
+      if (current != null && current.isNotEmpty) {
+        final lesson = current.firstWhere((l) => l.id == lessonId, orElse: () => current.first);
+        if (lesson.sectionId != null) {
+          await loadLessonsBySection(lesson.sectionId!);
+        } else if (lesson.courseId.isNotEmpty) {
+          await loadLessonsByCourse(lesson.courseId);
+        } else {
+          await loadLessons();
+        }
+      } else {
+        await loadLessons();
+      }
+    } catch (error) {
+      _ref.read(debugLogsProvider.notifier).addLog('❌ Error updating lesson title: $error');
+      rethrow;
+    }
+  }
 }
 
 final lessonProvider = StateNotifierProvider<LessonNotifier, AsyncValue<List<Lesson>>>(

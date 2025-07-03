@@ -29,57 +29,6 @@ class _CourseContentReorderableScreenState extends ConsumerState<CourseContentRe
     final courseLessons = ref.watch(courseLessonsProvider(widget.courseId));
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Содержимое курса'),
-        backgroundColor: Color(0xFF4A90B8), // primaryBlue
-        foregroundColor: Colors.white,
-        actions: [
-          IconButton(
-            onPressed: () {
-              setState(() {
-                _isReordering = !_isReordering;
-              });
-            },
-            icon: Icon(_isReordering ? Icons.check : Icons.sort),
-            tooltip: _isReordering ? 'Завершить сортировку' : 'Сортировать',
-          ),
-          if (!_isReordering)
-            PopupMenuButton<String>(
-              onSelected: (value) {
-                switch (value) {
-                  case 'add_section':
-                    _showCreateSectionDialog(context, ref);
-                    break;
-                  case 'add_lesson':
-                    _showCreateLessonDialog(context, ref, null);
-                    break;
-                }
-              },
-              itemBuilder: (context) => [
-                const PopupMenuItem(
-                  value: 'add_section',
-                  child: Row(
-                    children: [
-                      Icon(Icons.folder_outlined),
-                      SizedBox(width: 8),
-                      Text('Добавить раздел'),
-                    ],
-                  ),
-                ),
-                const PopupMenuItem(
-                  value: 'add_lesson',
-                  child: Row(
-                    children: [
-                      Icon(Icons.article_outlined),
-                      SizedBox(width: 8),
-                      Text('Добавить урок'),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-        ],
-      ),
       body: sections.when(
         data: (sectionList) => courseLessons.when(
           data: (lessonList) => _buildContent(context, ref, sectionList, lessonList),
