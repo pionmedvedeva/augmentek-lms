@@ -8,6 +8,7 @@ import 'package:miniapp/features/course/providers/homework_provider.dart';
 import 'package:miniapp/features/course/providers/enrollment_provider.dart';
 import 'package:miniapp/features/course/providers/lesson_provider.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
+import 'package:miniapp/shared/widgets/enhanced_video_player.dart';
 
 class LessonViewScreen extends ConsumerStatefulWidget {
   final Lesson lesson;
@@ -24,7 +25,6 @@ class LessonViewScreen extends ConsumerStatefulWidget {
 }
 
 class _LessonViewScreenState extends ConsumerState<LessonViewScreen> {
-  YoutubePlayerController? _youtubeController;
   final TextEditingController _homeworkAnswerController = TextEditingController();
   bool _isSubmittingHomework = false;
   HomeworkSubmission? _existingSubmission;
@@ -32,8 +32,6 @@ class _LessonViewScreenState extends ConsumerState<LessonViewScreen> {
   @override
   void initState() {
     super.initState();
-    _initializeVideoPlayer();
-    _checkExistingSubmission();
     _trackLessonAccess();
   }
 
@@ -51,48 +49,9 @@ class _LessonViewScreenState extends ConsumerState<LessonViewScreen> {
     });
   }
 
-  void _initializeVideoPlayer() {
-    if (widget.lesson.videoUrl != null && widget.lesson.videoUrl!.isNotEmpty) {
-      final videoId = YoutubePlayer.convertUrlToId(widget.lesson.videoUrl!);
-      if (videoId != null) {
-        _youtubeController = YoutubePlayerController(
-          initialVideoId: videoId,
-          flags: const YoutubePlayerFlags(
-            autoPlay: false,
-            mute: false,
-          ),
-        );
-      }
-    }
-  }
-
-  Future<void> _checkExistingSubmission() async {
-    final user = ref.read(userProvider).value;
-    if (user != null && !user.isAdmin) {
-      try {
-        final homeworkNotifier = ref.read(homeworkProvider.notifier);
-        final submission = await homeworkNotifier.getStudentSubmissionForLesson(
-          user.id.toString(),
-          widget.lesson.id,
-        );
-        if (mounted) {
-          setState(() {
-            _existingSubmission = submission;
-            if (submission != null && submission.status == HomeworkStatus.needsWork) {
-              _homeworkAnswerController.text = submission.answer;
-            }
-          });
-        }
-      } catch (e) {
-        // Ignore error - user just hasn't submitted yet
-      }
-    }
-  }
-
   @override
   void dispose() {
     _homeworkAnswerController.dispose();
-    _youtubeController?.dispose();
     super.dispose();
   }
 
@@ -176,7 +135,7 @@ class _LessonViewScreenState extends ConsumerState<LessonViewScreen> {
             ],
             
             // Видео урока
-            if (_youtubeController != null) ...[
+            if (widget.lesson.videoUrl != null && widget.lesson.videoUrl!.isNotEmpty) ...[
               const Text(
                 'Видео урока',
                 style: TextStyle(
@@ -198,10 +157,8 @@ class _LessonViewScreenState extends ConsumerState<LessonViewScreen> {
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(8),
-                  child: YoutubePlayer(
-                    controller: _youtubeController!,
-                    showVideoProgressIndicator: true,
-                    progressIndicatorColor: Colors.deepPurple,
+                  child: EnhancedVideoPlayer(
+                    videoUrl: widget.lesson.videoUrl!,
                   ),
                 ),
               ),
@@ -493,6 +450,29 @@ class _LessonViewScreenState extends ConsumerState<LessonViewScreen> {
         setState(() {
           _isSubmittingHomework = false;
         });
+      }
+    }
+  }
+
+  Future<void> _checkExistingSubmission() async {
+    final user = ref.read(userProvider).value;
+    if (user != null && !user.isAdmin) {
+      try {
+        final homeworkNotifier = ref.read(homeworkProvider.notifier);
+        final submission = await homeworkNotifier.getStudentSubmissionForLesson(
+          user.id.toString(),
+          widget.lesson.id,
+        );
+        if (mounted) {
+          setState(() {
+            _existingSubmission = submission;
+            if (submission != null && submission.status == HomeworkStatus.needsWork) {
+              _homeworkAnswerController.text = submission.answer;
+            }
+          });
+        }
+      } catch (e) {
+        // Ignore error - user just hasn't submitted yet
       }
     }
   }

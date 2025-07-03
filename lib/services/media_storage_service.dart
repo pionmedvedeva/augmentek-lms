@@ -2,7 +2,7 @@ import 'dart:typed_data';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:uuid/uuid.dart';
 import '../core/utils/app_logger.dart';
-import '../shared/models/lesson.dart';
+import '../shared/models/media.dart';
 
 /// Сервис для работы с медиафайлами в Firebase Storage
 class MediaStorageService {

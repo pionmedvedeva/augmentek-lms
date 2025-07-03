@@ -100,7 +100,7 @@ class _AppShellState extends ConsumerState<AppShell>
   }
 
   bool _shouldShowAdminTabs() {
-    // Показываем админские табы на всех admin и admin/course экранах
+    // Показываем админские табы на всех admin и admin/course экранах, включая вложенные (уроки, редактор и т.д.)
     return widget.currentRoute == '/admin' ||
            widget.currentRoute == '/admin/users' ||
            widget.currentRoute == '/admin/homework' ||

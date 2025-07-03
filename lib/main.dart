@@ -223,35 +223,6 @@ final _router = GoRouter(
       },
     ),
     GoRoute(
-      path: '/course/:courseId/lesson/:lessonId',
-      builder: (context, state) {
-        final courseId = state.pathParameters['courseId']!;
-        final lessonId = state.pathParameters['lessonId']!;
-        return AppShell(
-          currentRoute: '/student/course/$courseId/lesson/$lessonId',
-          child: LessonViewByIdScreen(
-            courseId: courseId,
-            lessonId: lessonId,
-          ),
-        );
-      },
-    ),
-    // Алиас для студенческого раздела (урок)
-    GoRoute(
-      path: '/student/course/:courseId/lesson/:lessonId',
-      builder: (context, state) {
-        final courseId = state.pathParameters['courseId']!;
-        final lessonId = state.pathParameters['lessonId']!;
-        return AppShell(
-          currentRoute: '/student/course/$courseId/lesson/$lessonId',
-          child: LessonViewByIdScreen(
-            courseId: courseId,
-            lessonId: lessonId,
-          ),
-        );
-      },
-    ),
-    GoRoute(
       path: '/admin/course/:courseId/edit',
       builder: (context, state) {
         final courseId = state.pathParameters['courseId']!;

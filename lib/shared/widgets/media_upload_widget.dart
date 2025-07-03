@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:dotted_border/dotted_border.dart';
 import '../../core/utils/app_logger.dart';
 import '../../services/media_storage_service.dart';
-import '../models/lesson.dart';
+import '../models/media.dart';
 
 /// Универсальный виджет для загрузки медиафайлов
 /// Поддерживает: изображения, видео, аудио, документы

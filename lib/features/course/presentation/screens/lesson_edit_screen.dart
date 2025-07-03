@@ -6,6 +6,9 @@ import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 import 'package:miniapp/shared/models/course.dart';
 import 'package:miniapp/features/course/providers/course_provider.dart';
 import 'package:go_router/go_router.dart';
+import 'package:miniapp/shared/widgets/media_upload_widget.dart';
+import 'package:miniapp/shared/widgets/enhanced_video_player.dart';
+import 'package:miniapp/shared/models/media.dart';
 
 class LessonEditScreen extends ConsumerWidget {
   final String courseId;
@@ -74,13 +77,12 @@ class _LessonEditFormScreenState extends ConsumerState<LessonEditFormScreen> {
   late final TextEditingController _titleController;
   late final TextEditingController _descriptionController;
   late final TextEditingController _contentController;
-  late final TextEditingController _videoUrlController;
   late final TextEditingController _homeworkTaskController;
   late final TextEditingController _homeworkAnswerController;
   late final TextEditingController _durationController;
 
-  YoutubePlayerController? _youtubeController;
   bool _isLoading = false;
+  List<MediaItem> _mediaItems = [];
 
   @override
   void initState() {
@@ -88,50 +90,9 @@ class _LessonEditFormScreenState extends ConsumerState<LessonEditFormScreen> {
     _titleController = TextEditingController(text: widget.lesson.title);
     _descriptionController = TextEditingController(text: widget.lesson.description);
     _contentController = TextEditingController(text: widget.lesson.content ?? '');
-    _videoUrlController = TextEditingController(text: widget.lesson.videoUrl ?? '');
     _homeworkTaskController = TextEditingController(text: widget.lesson.homeworkTask ?? '');
     _homeworkAnswerController = TextEditingController(text: widget.lesson.homeworkAnswer ?? '');
     _durationController = TextEditingController(text: widget.lesson.durationMinutes.toString());
-
-    _initializeVideoPlayer();
-    _videoUrlController.addListener(_onVideoUrlChanged);
-  }
-
-  void _initializeVideoPlayer() {
-    if (widget.lesson.videoUrl != null && widget.lesson.videoUrl!.isNotEmpty) {
-      final videoId = YoutubePlayer.convertUrlToId(widget.lesson.videoUrl!);
-      if (videoId != null) {
-        _youtubeController = YoutubePlayerController(
-          initialVideoId: videoId,
-          flags: const YoutubePlayerFlags(
-            autoPlay: false,
-            mute: false,
-          ),
-        );
-      }
-    }
-  }
-
-  void _onVideoUrlChanged() {
-    final url = _videoUrlController.text.trim();
-    if (url.isNotEmpty) {
-      final videoId = YoutubePlayer.convertUrlToId(url);
-      if (videoId != null) {
-        _youtubeController?.dispose();
-        _youtubeController = YoutubePlayerController(
-          initialVideoId: videoId,
-          flags: const YoutubePlayerFlags(
-            autoPlay: false,
-            mute: false,
-          ),
-        );
-        setState(() {});
-      }
-    } else {
-      _youtubeController?.dispose();
-      _youtubeController = null;
-      setState(() {});
-    }
   }
 
   @override
@@ -139,11 +100,9 @@ class _LessonEditFormScreenState extends ConsumerState<LessonEditFormScreen> {
     _titleController.dispose();
     _descriptionController.dispose();
     _contentController.dispose();
-    _videoUrlController.dispose();
     _homeworkTaskController.dispose();
     _homeworkAnswerController.dispose();
     _durationController.dispose();
-    _youtubeController?.dispose();
     super.dispose();
   }
 
@@ -164,17 +123,17 @@ class _LessonEditFormScreenState extends ConsumerState<LessonEditFormScreen> {
         title: _titleController.text.trim(),
         description: _descriptionController.text.trim(),
         content: _contentController.text.trim().isEmpty ? null : _contentController.text.trim(),
-        videoUrl: _videoUrlController.text.trim().isEmpty ? null : _videoUrlController.text.trim(),
         homeworkTask: _homeworkTaskController.text.trim().isEmpty ? null : _homeworkTaskController.text.trim(),
         homeworkAnswer: _homeworkAnswerController.text.trim().isEmpty ? null : _homeworkAnswerController.text.trim(),
         durationMinutes: int.tryParse(_durationController.text.trim()) ?? 0,
         updatedAt: DateTime.now(),
+        videoUrl: _mediaItems.isNotEmpty ? _mediaItems.first.url : null,
       );
 
       await ref.read(lessonProvider.notifier).updateLesson(updatedLesson);
 
       if (mounted) {
-        Navigator.of(context).pop();
+        context.go('/admin/course/${widget.lesson.courseId}/edit');
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Урок обновлен успешно')),
         );
@@ -205,17 +164,21 @@ class _LessonEditFormScreenState extends ConsumerState<LessonEditFormScreen> {
       }
     }
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       child: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            const SizedBox(height: 16),
             // Название урока
             TextField(
               controller: _titleController,
               decoration: const InputDecoration(
-                labelText: 'Название урока *',
+                labelText: 'Название урока',
+                hintText: 'Введите название урока',
                 border: OutlineInputBorder(),
+                contentPadding: EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+                floatingLabelBehavior: FloatingLabelBehavior.auto,
               ),
             ),
             const SizedBox(height: 16),
@@ -223,8 +186,11 @@ class _LessonEditFormScreenState extends ConsumerState<LessonEditFormScreen> {
             TextField(
               controller: _descriptionController,
               decoration: const InputDecoration(
-                labelText: 'Краткое описание *',
+                labelText: 'Краткое описание',
+                hintText: 'Краткое описание урока',
                 border: OutlineInputBorder(),
+                contentPadding: EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+                floatingLabelBehavior: FloatingLabelBehavior.auto,
               ),
               maxLines: 2,
             ),
@@ -234,9 +200,27 @@ class _LessonEditFormScreenState extends ConsumerState<LessonEditFormScreen> {
               controller: _durationController,
               decoration: const InputDecoration(
                 labelText: 'Длительность (минуты)',
+                hintText: '0',
                 border: OutlineInputBorder(),
+                contentPadding: EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+                floatingLabelBehavior: FloatingLabelBehavior.auto,
               ),
               keyboardType: TextInputType.number,
+            ),
+            const SizedBox(height: 24),
+            // Видео урока
+            MediaUploadWidget(
+              allowedTypes: [MediaType.video],
+              initialMediaItems: _mediaItems,
+              lessonId: widget.lesson.id,
+              onMediaChanged: (items) {
+                setState(() {
+                  _mediaItems = items;
+                });
+              },
+              title: 'Видео урока',
+              hint: 'Загрузите mp4/webm/mov/avi',
+              maxFiles: 1,
             ),
             const SizedBox(height: 24),
             // Основной контент урока
@@ -252,53 +236,14 @@ class _LessonEditFormScreenState extends ConsumerState<LessonEditFormScreen> {
               controller: _contentController,
               decoration: const InputDecoration(
                 labelText: 'Текст урока',
+                hintText: 'Введите текст урока',
                 border: OutlineInputBorder(),
+                contentPadding: EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+                floatingLabelBehavior: FloatingLabelBehavior.auto,
               ),
               maxLines: 8,
             ),
             const SizedBox(height: 16),
-            // Видео
-            const Text(
-              'Видео урока',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _videoUrlController,
-              decoration: const InputDecoration(
-                labelText: 'Ссылка на YouTube видео',
-                border: OutlineInputBorder(),
-                hintText: 'https://www.youtube.com/watch?v=...',
-              ),
-            ),
-            const SizedBox(height: 16),
-            // Превью видео
-            if (_youtubeController != null) ...[
-              Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(8),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: YoutubePlayer(
-                    controller: _youtubeController!,
-                    showVideoProgressIndicator: true,
-                    progressIndicatorColor: Colors.deepPurple,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-            ],
             // Домашнее задание
             const Text(
               'Домашнее задание',
@@ -312,8 +257,10 @@ class _LessonEditFormScreenState extends ConsumerState<LessonEditFormScreen> {
               controller: _homeworkTaskController,
               decoration: const InputDecoration(
                 labelText: 'Формулировка задания',
-                border: OutlineInputBorder(),
                 hintText: 'Опишите что должен сделать студент...',
+                border: OutlineInputBorder(),
+                contentPadding: EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+                floatingLabelBehavior: FloatingLabelBehavior.auto,
               ),
               maxLines: 4,
             ),
@@ -322,8 +269,10 @@ class _LessonEditFormScreenState extends ConsumerState<LessonEditFormScreen> {
               controller: _homeworkAnswerController,
               decoration: const InputDecoration(
                 labelText: 'Правильный ответ/решение',
-                border: OutlineInputBorder(),
                 hintText: 'Введите правильный ответ или решение...',
+                border: OutlineInputBorder(),
+                contentPadding: EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+                floatingLabelBehavior: FloatingLabelBehavior.auto,
               ),
               maxLines: 4,
             ),
