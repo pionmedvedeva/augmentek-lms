@@ -5,9 +5,11 @@ import 'package:miniapp/features/course/providers/course_provider.dart';
 import 'package:miniapp/features/admin/presentation/widgets/create_course_dialog.dart';
 import 'package:miniapp/features/admin/presentation/widgets/course_card.dart';
 import 'package:miniapp/features/course/presentation/screens/course_content_screen.dart';
+import 'package:miniapp/shared/models/course.dart';
 
 class CourseManagementScreen extends ConsumerWidget {
-  const CourseManagementScreen({super.key});
+  final void Function(Course)? onOpenCourse;
+  const CourseManagementScreen({Key? key, this.onOpenCourse}) : super(key: key);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -58,7 +60,13 @@ class CourseManagementScreen extends ConsumerWidget {
                       onToggleStatus: (isActive) => ref
                           .read(courseProvider.notifier)
                           .toggleCourseStatus(course.id, isActive),
-                      onManageContent: () => _navigateToCourseContent(context, course),
+                      onManageContent: () {
+                        if (onOpenCourse != null) {
+                          onOpenCourse!(course);
+                        } else {
+                          _navigateToCourseContent(context, course);
+                        }
+                      },
                     );
                   },
                 ),
@@ -158,8 +166,6 @@ class CourseManagementScreen extends ConsumerWidget {
       ),
     );
   }
-
-
 
   void _showDeleteConfirmation(BuildContext context, WidgetRef ref, String courseId) {
     showDialog(

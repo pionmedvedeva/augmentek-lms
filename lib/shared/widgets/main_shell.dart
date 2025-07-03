@@ -2,22 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:miniapp/features/auth/providers/user_provider.dart';
-import 'package:miniapp/features/student/presentation/screens/student_dashboard.dart';
-import 'package:miniapp/features/course/presentation/screens/course_list_screen.dart';
-import 'package:miniapp/features/admin/presentation/screens/admin_dashboard.dart';
 import 'package:miniapp/shared/widgets/enhanced_user_avatar.dart';
 import 'package:miniapp/shared/widgets/debug_log_screen.dart';
 import 'package:miniapp/core/utils/app_logger.dart';
 import 'package:telegram_web_app/telegram_web_app.dart';
 
-/// Основной Shell с постоянным нижним навбаром
-class MainShell extends ConsumerStatefulWidget {
+/// Основной Shell с универсальной навигацией согласно UI Guidelines
+class AppShell extends ConsumerStatefulWidget {
   final Widget child;
   final String currentRoute;
   final bool showBottomNav;
   final bool showAvatar;
 
-  const MainShell({
+  const AppShell({
     super.key,
     required this.child,
     required this.currentRoute,
@@ -26,46 +23,93 @@ class MainShell extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<MainShell> createState() => _MainShellState();
+  ConsumerState<AppShell> createState() => _AppShellState();
 }
 
-class _MainShellState extends ConsumerState<MainShell> {
+class _AppShellState extends ConsumerState<AppShell> 
+    with SingleTickerProviderStateMixin {
   int _currentIndex = 0;
+  TabController? _tabController;
 
   @override
   void initState() {
     super.initState();
     _updateCurrentIndex();
+    _initTabController();
   }
 
   @override
-  void didUpdateWidget(MainShell oldWidget) {
+  void didUpdateWidget(AppShell oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.currentRoute != widget.currentRoute) {
       _updateCurrentIndex();
+      _initTabController();
     }
   }
 
+  @override
+  void dispose() {
+    _tabController?.dispose();
+    super.dispose();
+  }
+
+  void _initTabController() {
+    // Создаем TabController для студенческих экранов
+    if (_shouldShowStudentTabs()) {
+      _tabController?.dispose();
+      _tabController = TabController(length: 2, vsync: this);
+      
+      // Определяем начальный таб на основе маршрута или параметра
+      final uri = Uri.parse(widget.currentRoute);
+      final tabParam = uri.queryParameters['tab'];
+      int initialTab = 1; // По умолчанию "Учеба"
+      
+      if (tabParam != null) {
+        initialTab = int.tryParse(tabParam) ?? 1;
+      }
+      
+      _tabController!.index = initialTab;
+    }
+    // Создаем TabController для админских экранов
+    else if (_shouldShowAdminTabs()) {
+      _tabController?.dispose();
+      _tabController = TabController(length: 3, vsync: this);
+      
+      // Определяем текущий таб на основе маршрута
+      int initialTab = 0; // По умолчанию "Курсы"
+      if (widget.currentRoute == '/admin/users') {
+        initialTab = 1; // Пользователи
+      } else if (widget.currentRoute == '/admin/homework') {
+        initialTab = 2; // Домашки
+      }
+      
+      _tabController!.index = initialTab;
+    }
+  }
+
+  bool _shouldShowStudentTabs() {
+    // Показываем TabBar только на основных студенческих экранах (не во вложенных)
+    return widget.currentRoute == '/student' ||
+           (widget.currentRoute.startsWith('/student') && 
+            !widget.currentRoute.contains('/course/') &&
+            !widget.currentRoute.contains('/homework'));
+  }
+
+  bool _shouldShowAdminTabs() {
+    // Показываем админские табы только на основных админских экранах (не во вложенных)
+    return widget.currentRoute == '/admin' ||
+           widget.currentRoute == '/admin/users' ||
+           widget.currentRoute == '/admin/homework';
+  }
+
   void _updateCurrentIndex() {
-    // Определяем индекс на основе текущего маршрута
-    switch (widget.currentRoute) {
-      case '/home':
-      case '/student':
-      case '/student/courses':
-      case '/student/homework':
-        _currentIndex = 0;
-        break;
-      case '/courses':
-      case '/admin/courses':
-        _currentIndex = 1;
-        break;
-      case '/admin':
-      case '/admin/users':
-      case '/admin/homework':
-        _currentIndex = 2;
-        break;
-      default:
-        _currentIndex = 0;
+    // Определяем индекс на основе текущего маршрута (только для админов)
+    if (widget.currentRoute.startsWith('/admin')) {
+      _currentIndex = 0; // Учительская
+    } else if (widget.currentRoute.startsWith('/student') || widget.currentRoute.startsWith('/course') || widget.currentRoute.startsWith('/home')) {
+      _currentIndex = 1; // Студенческая
+    } else {
+      _currentIndex = 0; // По умолчанию Учительская
     }
   }
 
@@ -79,29 +123,19 @@ class _MainShellState extends ConsumerState<MainShell> {
           return widget.child;
         }
 
-        // Определяем список экранов в зависимости от роли пользователя
-        final screens = [
-          const StudentDashboard(),
-          const CourseListScreen(),
-          if (appUser.isAdmin) const AdminDashboard(),
-        ];
-
-        // Определяем список табов
-        final tabs = [
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'За парту',
-          ),
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.school),
-            label: 'В коридор',
-          ),
-          if (appUser.isAdmin)
-            const BottomNavigationBarItem(
-              icon: Icon(Icons.admin_panel_settings),
-              label: 'Учительская',
-            ),
-        ];
+        // Определяем список табов только для админов (BottomNav)
+        final List<BottomNavigationBarItem> bottomTabs = appUser.isAdmin 
+          ? [
+              const BottomNavigationBarItem(
+                icon: Icon(Icons.admin_panel_settings),
+                label: 'Учительская',
+              ),
+              const BottomNavigationBarItem(
+                icon: Icon(Icons.school),
+                label: 'Студенческая',
+              ),
+            ]
+          : <BottomNavigationBarItem>[];
 
         // Определяем, показывать ли debug логи
         final webApp = TelegramWebApp.instance;
@@ -133,9 +167,42 @@ class _MainShellState extends ConsumerState<MainShell> {
                 ),
               ),
             ],
+            // Убираем bottom из AppBar, TabBar будет отдельно
           ) : null,
-          body: widget.child,
-          bottomNavigationBar: widget.showBottomNav ? Container(
+          body: Column(
+            children: [
+              // Студенческий TabBar (Level 1 navigation)
+              if (_shouldShowStudentTabs() && _tabController != null)
+                Container(
+                  color: const Color(0xFF4A90B8), // primaryBlue
+                  child: TabBar(
+                    controller: _tabController,
+                    indicatorColor: Colors.white,
+                    labelColor: Colors.white,
+                    unselectedLabelColor: Colors.white70,
+                    onTap: (index) => _onStudentTabChanged(index),
+                    tabs: const [
+                      Tab(
+                        icon: Icon(Icons.sports_esports),
+                        text: 'Клуб',
+                      ),
+                      Tab(
+                        icon: Icon(Icons.school),
+                        text: 'Учеба',
+                      ),
+                    ],
+                  ),
+                ),
+              
+              // Breadcrumbs (Level 2+ navigation)
+              if (_shouldShowBreadcrumbs())
+                _buildBreadcrumbs(),
+
+              // Основной контент
+              Expanded(child: widget.child),
+            ],
+          ),
+          bottomNavigationBar: (widget.showBottomNav && appUser.isAdmin) ? Container(
             margin: EdgeInsets.only(
               bottom: MediaQuery.of(context).padding.bottom > 0 ? 4 : 0,
             ),
@@ -152,7 +219,7 @@ class _MainShellState extends ConsumerState<MainShell> {
               unselectedItemColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
               backgroundColor: Theme.of(context).colorScheme.surface,
               elevation: 8,
-              items: tabs,
+              items: bottomTabs,
             ),
           ) : null,
         );
@@ -184,23 +251,174 @@ class _MainShellState extends ConsumerState<MainShell> {
     );
   }
 
-  void _navigateToTab(int index, appUser) {
+  bool _shouldShowBreadcrumbs() {
+    // Показываем breadcrumbs для вложенных экранов (Level 2+)
+    return widget.currentRoute.contains('/course/') ||
+           widget.currentRoute.contains('/lesson/') ||
+           widget.currentRoute.contains('/homework') ||
+           widget.currentRoute.contains('/users/') ||
+           (widget.currentRoute.startsWith('/admin') && widget.currentRoute.contains('/course/'));
+  }
+
+  Widget _buildBreadcrumbs() {
+    final parts = _getBreadcrumbParts();
+    if (parts.isEmpty) return const SizedBox.shrink();
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.grey[100],
+        border: Border(bottom: BorderSide(color: Colors.grey[300]!)),
+      ),
+      child: Row(
+        children: [
+          // Кнопка назад
+          IconButton(
+            onPressed: () => _navigateBack(),
+            icon: const Icon(Icons.arrow_back),
+            iconSize: 20,
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+          ),
+          const SizedBox(width: 8),
+          // Breadcrumb trail
+          Expanded(
+            child: Row(
+              children: parts.map((part) {
+                final isLast = part == parts.last;
+                return Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (part != parts.first) ...[
+                      const SizedBox(width: 4),
+                      Icon(Icons.chevron_right, size: 16, color: Colors.grey[600]),
+                      const SizedBox(width: 4),
+                    ],
+                    Text(
+                      part,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: isLast ? FontWeight.w600 : FontWeight.normal,
+                        color: isLast ? Colors.black87 : Colors.grey[600],
+                      ),
+                    ),
+                  ],
+                );
+              }).toList(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  List<String> _getBreadcrumbParts() {
+    final parts = <String>[];
+    
+    if (widget.currentRoute.contains('/student/course/')) {
+      parts.add('Учеба');
+      parts.add('Курс');
+      
+      if (widget.currentRoute.contains('/lesson/')) {
+        parts.add('Урок');
+      }
+    } else if (widget.currentRoute.contains('/course/') && !widget.currentRoute.startsWith('/admin')) {
+      // Старый формат студенческих маршрутов
+      parts.add('Учеба');
+      parts.add('Курс');
+      
+      if (widget.currentRoute.contains('/lesson/')) {
+        parts.add('Урок');
+      }
+    } else if (widget.currentRoute.contains('/student/homework')) {
+      parts.add('Учеба');
+      parts.add('Домашние задания');
+    } else if (widget.currentRoute.contains('/admin/users/')) {
+      parts.add('Пользователи');
+      parts.add('Профиль');
+    } else if (widget.currentRoute.startsWith('/admin') && widget.currentRoute.contains('/course/')) {
+      parts.add('Курсы');
+      if (widget.currentRoute.contains('/lesson/') && widget.currentRoute.contains('/edit')) {
+        parts.add('Редактирование курса');
+        parts.add('Редактирование урока');
+      } else if (widget.currentRoute.contains('/edit')) {
+        parts.add('Редактирование курса');
+      }
+    }
+    
+    return parts;
+  }
+
+  void _navigateBack() {
+    // Логика навигации назад в рамках текущего таба
+    if (widget.currentRoute.contains('/lesson/')) {
+      // Из урока возвращаемся к курсу
+      final courseId = RegExp(r'/course/([^/]+)').firstMatch(widget.currentRoute)?.group(1);
+      if (courseId != null) {
+        if (widget.currentRoute.startsWith('/admin')) {
+          // Админский урок -> админский курс
+          context.go('/admin/course/$courseId/edit');
+        } else {
+          // Студенческий урок -> студенческий курс
+          context.go('/student/course/$courseId');
+        }
+      }
+    } else if (widget.currentRoute.contains('/course/')) {
+      // Из курса возвращаемся к списку
+      if (widget.currentRoute.startsWith('/admin')) {
+        // Админский курс -> список курсов
+        context.go('/admin');
+      } else {
+        // Студенческий курс -> учеба
+        context.go('/student?tab=1');
+      }
+    } else if (widget.currentRoute.contains('/student/homework')) {
+      // Из домашек возвращаемся к учебе
+      context.go('/student?tab=1');
+    } else if (widget.currentRoute.contains('/admin/users/')) {
+      // Из профиля пользователя к списку пользователей
+      context.go('/admin/users');
+    } else {
+      // Дефолтное поведение - просто назад
+      if (context.canPop()) {
+        context.pop();
+      }
+    }
+  }
+
+  void _onStudentTabChanged(int index) {
+    // Навигация между студенческими табами
+    context.go('/student?tab=$index');
+  }
+
+  void _onAdminTabChanged(int index) {
+    // Навигация между админскими табами
     switch (index) {
       case 0:
-        // Первый таб - всегда студенческая панель или домашняя страница
-        context.go('/home');
+        context.go('/admin'); // Курсы
         break;
       case 1:
-        // Второй таб - курсы
-        context.go('/courses');
+        context.go('/admin/users'); // Пользователи
         break;
       case 2:
-        // Третий таб - только для админов
-        if (appUser.isAdmin) {
-          context.go('/admin');
-        }
+        context.go('/admin/homework'); // Домашки
         break;
     }
+  }
+
+  void _navigateToTab(int index, appUser) {
+    if (appUser.isAdmin) {
+      // Для админов: 2 таба в BottomNav
+      switch (index) {
+        case 0:
+          context.go('/admin'); // Учительская
+          break;
+        case 1:
+          context.go('/student?tab=1'); // Студенческая (Учеба)
+          break;
+      }
+    }
+    // Для студентов навигация только через верхний TabBar
   }
 
   void _showUserProfile(BuildContext context, appUser) {

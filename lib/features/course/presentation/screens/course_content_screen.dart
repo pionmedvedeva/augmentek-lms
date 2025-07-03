@@ -20,264 +20,216 @@ class CourseContentScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final sections = ref.watch(sectionProvider(courseId));
-    final courseLessons = ref.watch(courseLessonsProvider(courseId));
+    final sectionsAsync = ref.watch(sectionProvider(courseId));
+    final lessonsAsync = ref.watch(courseLessonsProvider(courseId));
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Содержимое курса'),
-        backgroundColor: Color(0xFF4A90B8), // primaryBlue
-        foregroundColor: Colors.white,
-        actions: [
-          IconButton(
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => CourseContentReorderableScreen(courseId: courseId),
-                ),
-              );
-            },
-            icon: const Icon(Icons.sort),
-            tooltip: 'Сортировать',
-          ),
-          PopupMenuButton<String>(
-            onSelected: (value) {
-              switch (value) {
-                case 'add_section':
-                  _showCreateSectionDialog(context, ref);
-                  break;
-                case 'add_lesson':
-                  _showCreateLessonDialog(context, ref, null);
-                  break;
-              }
-            },
-            itemBuilder: (context) => [
-              const PopupMenuItem(
-                value: 'add_section',
-                child: Row(
-                  children: [
-                    Icon(Icons.folder_outlined),
-                    SizedBox(width: 8),
-                    Text('Добавить раздел'),
-                  ],
-                ),
-              ),
-              const PopupMenuItem(
-                value: 'add_lesson',
-                child: Row(
-                  children: [
-                    Icon(Icons.article_outlined),
-                    SizedBox(width: 8),
-                    Text('Добавить урок'),
-                  ],
-                ),
-              ),
+    return sectionsAsync.when(
+      data: (sections) => lessonsAsync.when(
+        data: (lessons) => _buildContent(context, ref, sections, lessons),
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (error, stack) => Center(child: Text('Ошибка загрузки уроков: $error')),
+      ),
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (error, stack) => Center(child: Text('Ошибка загрузки разделов: $error')),
+    );
+  }
+
+  Widget _buildContent(BuildContext context, WidgetRef ref, List<Section> sections, List<Lesson> lessons) {
+    final directLessons = lessons.where((l) => l.sectionId == null).toList();
+
+    return ListView(
+      padding: EdgeInsets.zero,
+      children: [
+        // Чипы
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+          child: Row(
+            children: [
+              _buildStatChip('Разделы', sections.length.toString(), Colors.blue),
+              const SizedBox(width: 8),
+              _buildStatChip('Уроки', lessons.length.toString(), Colors.green),
             ],
           ),
-        ],
-      ),
-      body: sections.when(
-        data: (sectionList) => courseLessons.when(
-          data: (lessonList) => _buildContent(context, ref, sectionList, lessonList),
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (error, stack) => Center(child: Text('Ошибка загрузки уроков: $error')),
         ),
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(child: Text('Ошибка загрузки разделов: $error')),
+        // Уроки без раздела (drag-and-drop)
+        if (directLessons.isNotEmpty)
+          _buildReorderableLessonList(context, ref, directLessons, null),
+        if (directLessons.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () => _showCreateLessonDialog(context, ref, null),
+                icon: const Icon(Icons.add),
+                label: const Text('Добавить урок'),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  textStyle: const TextStyle(fontWeight: FontWeight.w600),
+                ),
+              ),
+            ),
+          ),
+        // Разделы (drag-and-drop)
+        _buildReorderableSectionList(context, ref, sections, lessons),
+        // Кнопка добавить раздел
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () => _showCreateSectionDialog(context, ref),
+              icon: const Icon(Icons.add),
+              label: const Text('Добавить раздел'),
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                textStyle: const TextStyle(fontWeight: FontWeight.w600),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildReorderableSectionList(BuildContext context, WidgetRef ref, List<Section> sections, List<Lesson> lessons) {
+    final sortedSections = List<Section>.from(sections)..sort((a, b) => a.order.compareTo(b.order));
+    return ReorderableListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: sortedSections.length,
+      buildDefaultDragHandles: false,
+      onReorder: (oldIndex, newIndex) async {
+        if (newIndex > oldIndex) newIndex--;
+        final updated = List<Section>.from(sortedSections);
+        final moved = updated.removeAt(oldIndex);
+        updated.insert(newIndex, moved);
+        await ref.read(sectionProvider(courseId).notifier).reorderSections(updated);
+        ref.invalidate(sectionProvider(courseId));
+      },
+      itemBuilder: (context, i) => _buildSectionTile(context, ref, sortedSections[i], lessons, i, Key('section_${sortedSections[i].id}')),
+    );
+  }
+
+  Widget _buildSectionTile(BuildContext context, WidgetRef ref, Section section, List<Lesson> allLessons, int index, Key key) {
+    final sectionLessons = List<Lesson>.from(allLessons.where((l) => l.sectionId == section.id))
+      ..sort((a, b) => a.order.compareTo(b.order));
+    return Card(
+      key: key,
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                ReorderableDragStartListener(
+                  index: index,
+                  child: const Icon(Icons.drag_indicator, color: Colors.grey),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    section.title,
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.edit, color: Colors.blue),
+                  tooltip: 'Редактировать раздел',
+                  onPressed: () => _showEditSectionDialog(context, ref, section),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.delete, color: Colors.red),
+                  tooltip: 'Удалить раздел',
+                  onPressed: () => _showDeleteSectionDialog(context, ref, section),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            _buildReorderableLessonList(context, ref, sectionLessons, section.id),
+            Padding(
+              padding: const EdgeInsets.only(top: 8, left: 8, right: 8),
+              child: SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () => _showCreateLessonDialog(context, ref, section.id),
+                  icon: const Icon(Icons.add),
+                  label: const Text('Добавить урок'),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    textStyle: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildContent(BuildContext context, WidgetRef ref, List<Section> sections, List<Lesson> courseLessons) {
-    // Уроки без раздела (прямо в курсе)
-    final directLessons = courseLessons.where((lesson) => lesson.sectionId == null).toList();
+  Widget _buildReorderableLessonList(BuildContext context, WidgetRef ref, List<Lesson> lessons, String? sectionId) {
+    final sortedLessons = List<Lesson>.from(lessons)..sort((a, b) => a.order.compareTo(b.order));
+    return ReorderableListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: sortedLessons.length,
+      buildDefaultDragHandles: false,
+      onReorder: (oldIndex, newIndex) async {
+        if (newIndex > oldIndex) newIndex--;
+        final updated = List<Lesson>.from(sortedLessons);
+        final moved = updated.removeAt(oldIndex);
+        updated.insert(newIndex, moved);
+        if (sectionId == null) {
+          await ref.read(courseLessonsProvider(courseId).notifier).reorderLessons(updated.map((l) => l.id).toList());
+          ref.invalidate(courseLessonsProvider(courseId));
+          // На всякий случай инвалидируем все sectionLessonsProvider для этого курса
+          for (final lesson in updated) {
+            if (lesson.sectionId != null) {
+              ref.invalidate(sectionLessonsProvider(lesson.sectionId!));
+            }
+          }
+        } else {
+          await ref.read(sectionLessonsProvider(sectionId).notifier).reorderLessons(updated.map((l) => l.id).toList());
+          ref.invalidate(sectionLessonsProvider(sectionId));
+          ref.invalidate(courseLessonsProvider(courseId));
+        }
+      },
+      itemBuilder: (context, i) => _buildLessonTile(context, ref, sortedLessons[i], i, Key('lesson_${sortedLessons[i].id}')),
+    );
+  }
 
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        // Статистика курса
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Статистика курса',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    _buildStatChip('Разделы', sections.length.toString(), Colors.blue),
-                    const SizedBox(width: 8),
-                    _buildStatChip('Уроки', courseLessons.length.toString(), Colors.green),
-                  ],
-                ),
-              ],
-            ),
+  Widget _buildLessonTile(BuildContext context, WidgetRef ref, Lesson lesson, int index, Key key) {
+    return ListTile(
+      key: key,
+      leading: ReorderableDragStartListener(
+        index: index,
+        child: const Icon(Icons.drag_indicator, color: Colors.grey),
+      ),
+      title: Text(lesson.title),
+      subtitle: Text(lesson.description),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          IconButton(
+            icon: const Icon(Icons.edit, color: Colors.blue),
+            tooltip: 'Редактировать урок',
+            onPressed: () => _showEditLessonDialog(context, ref, lesson),
           ),
-        ),
-        
-        const SizedBox(height: 16),
-
-        // Уроки без раздела
-        if (directLessons.isNotEmpty) ...[
-          Row(
-            children: [
-              const Icon(Icons.article, color: Colors.deepPurple),
-              const SizedBox(width: 8),
-              const Text(
-                'Уроки курса',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const Spacer(),
-              IconButton(
-                onPressed: () => _showCreateLessonDialog(context, ref, null),
-                icon: const Icon(Icons.add),
-                tooltip: 'Добавить урок',
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          ...directLessons.map((lesson) => _buildLessonCard(context, ref, lesson)),
-          const SizedBox(height: 24),
-        ],
-
-        // Разделы
-        if (sections.isNotEmpty) ...[
-          Row(
-            children: [
-              const Icon(Icons.folder, color: Colors.deepPurple),
-              const SizedBox(width: 8),
-              const Text(
-                'Разделы',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const Spacer(),
-              IconButton(
-                onPressed: () => _showCreateSectionDialog(context, ref),
-                icon: const Icon(Icons.add),
-                tooltip: 'Добавить раздел',
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          ...sections.map((section) => _buildSectionCard(context, ref, section, courseLessons)),
-        ],
-
-        // Кнопки для добавления контента
-        if (sections.isEmpty && directLessons.isEmpty) ...[
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(32),
-              child: Column(
-                children: [
-                  Icon(
-                    Icons.auto_stories_outlined,
-                    size: 64,
-                    color: Colors.grey[400],
-                  ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Курс пока пуст',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Добавьте разделы и уроки для структурированного обучения',
-                    style: TextStyle(color: Colors.grey[600]),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 24),
-                  LayoutBuilder(
-                    builder: (context, constraints) {
-                      // Если ширина меньше 400px, располагаем кнопки вертикально
-                      if (constraints.maxWidth < 400) {
-                        return Column(
-                          children: [
-                            SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton.icon(
-                                onPressed: () => _showCreateSectionDialog(context, ref),
-                                icon: const Icon(Icons.folder_outlined),
-                                label: const Text('Добавить раздел'),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Color(0xFF4A90B8), // primaryBlue
-                                  foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(vertical: 12),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton.icon(
-                                onPressed: () => _showCreateLessonDialog(context, ref, null),
-                                icon: const Icon(Icons.article_outlined),
-                                label: const Text('Добавить урок'),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.green,
-                                  foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(vertical: 12),
-                                ),
-                              ),
-                            ),
-                          ],
-                        );
-                      } else {
-                        // На широких экранах кнопки в ряд
-                        return Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: [
-                            Expanded(
-                              child: ElevatedButton.icon(
-                                onPressed: () => _showCreateSectionDialog(context, ref),
-                                icon: const Icon(Icons.folder_outlined),
-                                label: const Text('Добавить раздел'),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Color(0xFF4A90B8), // primaryBlue
-                                  foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(vertical: 12),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: ElevatedButton.icon(
-                                onPressed: () => _showCreateLessonDialog(context, ref, null),
-                                icon: const Icon(Icons.article_outlined),
-                                label: const Text('Добавить урок'),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.green,
-                                  foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(vertical: 12),
-                                ),
-                              ),
-                            ),
-                          ],
-                        );
-                      }
-                    },
-                  ),
-                ],
-              ),
-            ),
+          IconButton(
+            icon: const Icon(Icons.delete, color: Colors.red),
+            tooltip: 'Удалить урок',
+            onPressed: () => _showDeleteLessonDialog(context, ref, lesson),
           ),
         ],
-      ],
+      ),
+      visualDensity: VisualDensity.compact,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+      onTap: () {
+        context.go('/course/$courseId/lesson/${lesson.id}');
+      },
     );
   }
 
@@ -308,139 +260,6 @@ class CourseContentScreen extends ConsumerWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildSectionCard(BuildContext context, WidgetRef ref, Section section, List<Lesson> allLessons) {
-    final sectionLessons = allLessons.where((lesson) => lesson.sectionId == section.id).toList();
-
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      child: ExpansionTile(
-        leading: Icon(Icons.folder, color: Color(0xFF4A90B8)), // primaryBlue
-        title: Text(
-          section.title,
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-        subtitle: Text('${sectionLessons.length} урок(ов)'),
-        trailing: PopupMenuButton<String>(
-          onSelected: (value) {
-            switch (value) {
-              case 'add_lesson':
-                _showCreateLessonDialog(context, ref, section.id);
-                break;
-              case 'edit':
-                _showEditSectionDialog(context, ref, section);
-                break;
-              case 'delete':
-                _showDeleteSectionDialog(context, ref, section);
-                break;
-            }
-          },
-          itemBuilder: (context) => [
-            const PopupMenuItem(
-              value: 'add_lesson',
-              child: Row(
-                children: [
-                  Icon(Icons.add),
-                  SizedBox(width: 8),
-                  Text('Добавить урок'),
-                ],
-              ),
-            ),
-            const PopupMenuItem(
-              value: 'edit',
-              child: Row(
-                children: [
-                  Icon(Icons.edit),
-                  SizedBox(width: 8),
-                  Text('Редактировать'),
-                ],
-              ),
-            ),
-            const PopupMenuItem(
-              value: 'delete',
-              child: Row(
-                children: [
-                  Icon(Icons.delete, color: Colors.red),
-                  SizedBox(width: 8),
-                  Text('Удалить', style: TextStyle(color: Colors.red)),
-                ],
-              ),
-            ),
-          ],
-        ),
-        children: sectionLessons.map((lesson) => Padding(
-          padding: const EdgeInsets.only(left: 32),
-          child: _buildLessonCard(context, ref, lesson),
-        )).toList(),
-      ),
-    );
-  }
-
-  Widget _buildLessonCard(BuildContext context, WidgetRef ref, Lesson lesson) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 4),
-      child: ListTile(
-        leading: const Icon(Icons.play_circle_outline, color: Colors.green),
-        title: Text(lesson.title),
-        subtitle: Text(lesson.description),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (lesson.durationMinutes > 0)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.blue.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  '${lesson.durationMinutes} мин',
-                  style: const TextStyle(fontSize: 12),
-                ),
-              ),
-            const SizedBox(width: 8),
-            PopupMenuButton<String>(
-              onSelected: (value) {
-                switch (value) {
-                  case 'edit':
-                    _showEditLessonDialog(context, ref, lesson);
-                    break;
-                  case 'delete':
-                    _showDeleteLessonDialog(context, ref, lesson);
-                    break;
-                }
-              },
-              itemBuilder: (context) => [
-                const PopupMenuItem(
-                  value: 'edit',
-                  child: Row(
-                    children: [
-                      Icon(Icons.edit),
-                      SizedBox(width: 8),
-                      Text('Редактировать'),
-                    ],
-                  ),
-                ),
-                const PopupMenuItem(
-                  value: 'delete',
-                  child: Row(
-                    children: [
-                      Icon(Icons.delete, color: Colors.red),
-                      SizedBox(width: 8),
-                      Text('Удалить', style: TextStyle(color: Colors.red)),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-        onTap: () {
-          context.go('/course/$courseId/lesson/${lesson.id}');
-        },
       ),
     );
   }
@@ -581,8 +400,8 @@ class CourseContentScreen extends ConsumerWidget {
               if (titleController.text.trim().isNotEmpty && 
                   descriptionController.text.trim().isNotEmpty) {
                 try {
-                          await ref.read(courseLessonsProvider(courseId).notifier).createLesson(
-          courseId: courseId,
+                  await ref.read(courseLessonsProvider(courseId).notifier).createLesson(
+                    courseId: courseId,
                     sectionId: sectionId,
                     title: titleController.text.trim(),
                     description: descriptionController.text.trim(),

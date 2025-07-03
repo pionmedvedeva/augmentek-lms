@@ -181,6 +181,8 @@ class LessonNotifier extends StateNotifier<AsyncValue<List<Lesson>>> {
 
   Future<void> reorderLessons(List<String> lessonIds) async {
     try {
+      _ref.read(debugLogsProvider.notifier).addLog('🔄 Reordering lessons: ${lessonIds.length} lessons');
+      
       final batch = _firestore.batch();
       
       for (int i = 0; i < lessonIds.length; i++) {
@@ -192,8 +194,21 @@ class LessonNotifier extends StateNotifier<AsyncValue<List<Lesson>>> {
       }
       
       await batch.commit();
-      await loadLessons();
+      
+      // Перезагружаем уроки в зависимости от контекста
+      final currentLessons = state.value ?? [];
+      if (currentLessons.isNotEmpty) {
+        final firstLesson = currentLessons.first;
+        if (firstLesson.sectionId != null) {
+          await loadLessonsBySection(firstLesson.sectionId!);
+        } else {
+          await loadLessonsByCourse(firstLesson.courseId);
+        }
+      }
+      
+      _ref.read(debugLogsProvider.notifier).addLog('✅ Lessons reordered successfully');
     } catch (error) {
+      _ref.read(debugLogsProvider.notifier).addLog('❌ Error reordering lessons: $error');
       throw Exception('Ошибка изменения порядка уроков: $error');
     }
   }

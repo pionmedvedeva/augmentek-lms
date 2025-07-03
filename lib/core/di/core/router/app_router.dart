@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:miniapp/features/admin/presentation/screens/admin_dashboard.dart';
-import 'package:miniapp/features/student/presentation/screens/student_dashboard.dart';
+import 'package:miniapp/features/student/presentation/screens/student_navigation_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
@@ -22,7 +22,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/student',
-        builder: (context, state) => const StudentDashboard(),
+        builder: (context, state) {
+          final tabIndex = int.tryParse(state.uri.queryParameters['tab'] ?? '1') ?? 1;
+          return StudentNavigationScreen(tabIndex: tabIndex);
+        },
       ),
     ],
   );

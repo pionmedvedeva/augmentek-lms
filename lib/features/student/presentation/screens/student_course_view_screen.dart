@@ -21,21 +21,14 @@ class StudentCourseViewScreen extends ConsumerWidget {
     final sections = ref.watch(sectionProvider(course.id));
     final courseLessons = ref.watch(courseLessonsProvider(course.id));
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(course.title),
-        backgroundColor: Color(0xFF4A90B8), // primaryBlue
-        foregroundColor: Colors.white,
-      ),
-      body: sections.when(
-        data: (sectionList) => courseLessons.when(
-          data: (lessonList) => _buildContent(context, ref, sectionList, lessonList),
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (error, stack) => Center(child: Text('Ошибка загрузки уроков: $error')),
-        ),
+    return sections.when(
+      data: (sectionList) => courseLessons.when(
+        data: (lessonList) => _buildContent(context, ref, sectionList, lessonList),
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(child: Text('Ошибка загрузки разделов: $error')),
+        error: (error, stack) => Center(child: Text('Ошибка загрузки уроков: $error')),
       ),
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (error, stack) => Center(child: Text('Ошибка загрузки разделов: $error')),
     );
   }
 
@@ -117,78 +110,72 @@ class StudentCourseViewScreen extends ConsumerWidget {
           ),
         ),
         
-        const SizedBox(height: 24),
+        const SizedBox(height: 16),
 
-        // Уроки без раздела
+        // Прямые уроки (не в разделах)
         if (directLessons.isNotEmpty) ...[
-          const Row(
-            children: [
-              Icon(Icons.article, color: Colors.deepPurple),
-              SizedBox(width: 8),
-              Text(
-                'Уроки курса',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
+          const Text(
+            'Уроки',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
           ),
+          const SizedBox(height: 12),
+          ...directLessons.map((lesson) => _buildLessonCard(context, ref, lesson)),
           const SizedBox(height: 16),
-          ...directLessons.map((lesson) => _buildLessonCard(context, lesson, course)),
-          const SizedBox(height: 24),
         ],
 
-        // Разделы
+        // Разделы с уроками
         if (sections.isNotEmpty) ...[
-          const Row(
-            children: [
-              Icon(Icons.folder, color: Colors.deepPurple),
-              SizedBox(width: 8),
-              Text(
-                'Программа курса',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
+          const Text(
+            'Разделы курса',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
           ),
-          const SizedBox(height: 16),
-          ...sections.map((section) => _buildSectionCard(context, section, courseLessons, course)),
+          const SizedBox(height: 12),
+          ...sections.map((section) {
+            final sectionLessons = courseLessons.where((lesson) => lesson.sectionId == section.id).toList();
+            return _buildSectionCard(context, ref, section, sectionLessons);
+          }),
         ],
 
-        // Пустое состояние
-        if (sections.isEmpty && directLessons.isEmpty) ...[
+        // Если нет ни уроков, ни разделов
+        if (directLessons.isEmpty && sections.isEmpty)
           Card(
             child: Padding(
               padding: const EdgeInsets.all(32),
               child: Column(
                 children: [
                   Icon(
-                    Icons.auto_stories_outlined,
-                    size: 64,
+                    Icons.school_outlined,
+                    size: 48,
                     color: Colors.grey[400],
                   ),
                   const SizedBox(height: 16),
                   const Text(
-                    'Курс пока пуст',
+                    'Курс пока пустой',
                     style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
                     ),
+                    textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Материалы курса скоро появятся',
-                    style: TextStyle(color: Colors.grey[600]),
+                    'Уроки появятся здесь, когда преподаватель их добавит',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey[600],
+                    ),
                     textAlign: TextAlign.center,
                   ),
                 ],
               ),
             ),
           ),
-        ],
       ],
     );
   }
@@ -209,6 +196,7 @@ class StudentCourseViewScreen extends ConsumerWidget {
             style: TextStyle(
               color: color,
               fontWeight: FontWeight.bold,
+              fontSize: 14,
             ),
           ),
           const SizedBox(width: 4),
@@ -224,85 +212,60 @@ class StudentCourseViewScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildSectionCard(BuildContext context, Section section, List<Lesson> allLessons, Course course) {
-    final sectionLessons = allLessons.where((lesson) => lesson.sectionId == section.id).toList();
-
+  Widget _buildSectionCard(BuildContext context, WidgetRef ref, Section section, List<Lesson> lessons) {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: ExpansionTile(
-        leading: const Icon(Icons.folder, color: Colors.deepPurple),
         title: Text(
           section.title,
-          style: const TextStyle(fontWeight: FontWeight.bold),
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
         ),
-        subtitle: Text('${sectionLessons.length} урок(ов)'),
-        children: sectionLessons.map((lesson) => Padding(
-          padding: const EdgeInsets.only(left: 16),
-          child: _buildLessonCard(context, lesson, course),
-        )).toList(),
+        subtitle: Text('${lessons.length} уроков'),
+        children: lessons.map((lesson) => _buildLessonCard(context, ref, lesson, isInSection: true)).toList(),
       ),
     );
   }
 
-  Widget _buildLessonCard(BuildContext context, Lesson lesson, Course course) {
+  Widget _buildLessonCard(BuildContext context, WidgetRef ref, Lesson lesson, {bool isInSection = false}) {
     return Card(
-      margin: const EdgeInsets.only(bottom: 8),
+      margin: EdgeInsets.only(
+        bottom: 8,
+        left: isInSection ? 16 : 0,
+        right: isInSection ? 16 : 0,
+      ),
       child: ListTile(
         leading: Container(
-          padding: const EdgeInsets.all(8),
+          width: 40,
+          height: 40,
           decoration: BoxDecoration(
-            color: Colors.green.withOpacity(0.1),
+            color: const Color(0xFF4A90B8).withOpacity(0.1),
             borderRadius: BorderRadius.circular(8),
           ),
           child: const Icon(
             Icons.play_circle_outline,
-            color: Colors.green,
-            size: 24,
+            color: Color(0xFF4A90B8),
           ),
         ),
         title: Text(
           lesson.title,
-          style: const TextStyle(fontWeight: FontWeight.w600),
+          style: const TextStyle(
+            fontWeight: FontWeight.w600,
+          ),
         ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (lesson.description.isNotEmpty) ...[
-              const SizedBox(height: 4),
-              Text(
-                lesson.description,
+        subtitle: lesson.description?.isNotEmpty == true 
+            ? Text(
+                lesson.description!,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-              ),
-            ],
-            if (lesson.durationMinutes > 0) ...[
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Icon(
-                    Icons.access_time,
-                    size: 16,
-                    color: Colors.grey[600],
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    '${lesson.durationMinutes} мин',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey[600],
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ],
-        ),
-        trailing: const Icon(
-          Icons.arrow_forward_ios,
-          size: 16,
-        ),
+              )
+            : null,
+        trailing: const Icon(Icons.chevron_right),
         onTap: () {
-          context.go('/course/${course.id}/lesson/${lesson.id}');
+          // Переходим к уроку в студенческом разделе
+          context.go('/student/course/${course.id}/lesson/${lesson.id}');
         },
       ),
     );

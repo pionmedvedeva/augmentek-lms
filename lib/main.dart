@@ -12,12 +12,12 @@ import 'package:miniapp/core/config/app_environment.dart';
 import 'package:miniapp/core/cache/app_cache.dart';
 import 'package:miniapp/features/auth/providers/auth_provider.dart';
 import 'package:miniapp/features/auth/providers/user_provider.dart';
-import 'package:miniapp/features/home/presentation/screens/home_screen.dart';
 import 'package:miniapp/features/admin/presentation/screens/user_list_screen.dart';
 import 'package:miniapp/features/admin/presentation/screens/user_profile_screen.dart';
 import 'package:miniapp/features/admin/presentation/screens/admin_dashboard.dart';
+import 'package:miniapp/features/admin/presentation/screens/homework_review_screen.dart';
 import 'package:miniapp/features/course/presentation/screens/course_list_screen.dart';
-import 'package:miniapp/features/student/presentation/screens/student_dashboard.dart';
+import 'package:miniapp/features/student/presentation/screens/student_navigation_screen.dart';
 import 'package:miniapp/features/student/presentation/screens/enrolled_courses_screen.dart';
 import 'package:miniapp/features/student/presentation/screens/student_homework_screen.dart';
 import 'package:miniapp/features/student/presentation/screens/student_course_view_screen.dart';
@@ -30,6 +30,7 @@ import 'package:miniapp/shared/widgets/debug_log_screen.dart';
 import 'package:miniapp/shared/widgets/main_shell.dart';
 import 'package:url_strategy/url_strategy.dart';
 import 'package:telegram_web_app/telegram_web_app.dart';
+import 'package:miniapp/features/admin/presentation/screens/admin_navigation_screen.dart';
 
 // Глобальная ссылка на ProviderContainer для логирования
 late final ProviderContainer _globalContainer;
@@ -116,45 +117,42 @@ final _router = GoRouter(
     ),
     GoRoute(
       path: '/home',
-      builder: (context, state) => MainShell(
+      builder: (context, state) => AppShell(
         currentRoute: '/home',
-        child: const StudentDashboard(),
+        child: const StudentNavigationScreen(tabIndex: 0),
       ),
     ),
     GoRoute(
       path: '/courses',
-      builder: (context, state) => MainShell(
+      builder: (context, state) => AppShell(
         currentRoute: '/courses',
         child: const CourseListScreen(),
       ),
     ),
     GoRoute(
       path: '/admin',
-      builder: (context, state) => MainShell(
+      builder: (context, state) => AppShell(
         currentRoute: '/admin',
-        child: const AdminDashboard(),
+        child: const AdminNavigationScreen(tabIndex: 0),
       ),
     ),
     GoRoute(
       path: '/admin/users',
-      builder: (context, state) => MainShell(
+      builder: (context, state) => AppShell(
         currentRoute: '/admin/users',
-        child: const UserListScreen(),
+        child: const AdminNavigationScreen(tabIndex: 1),
       ),
     ),
     GoRoute(
-      path: '/admin/users/:userId',
-      builder: (context, state) {
-        final userId = state.pathParameters['userId']!;
-        return MainShell(
-          currentRoute: '/admin/users',
-          child: UserProfileScreen(userId: userId),
-        );
-      },
+      path: '/admin/homework',
+      builder: (context, state) => AppShell(
+        currentRoute: '/admin/homework',
+        child: const AdminNavigationScreen(tabIndex: 2),
+      ),
     ),
     GoRoute(
       path: '/admin/courses',
-      builder: (context, state) => MainShell(
+      builder: (context, state) => AppShell(
         currentRoute: '/admin/courses',
         child: const CourseListScreen(),
       ),
@@ -162,21 +160,24 @@ final _router = GoRouter(
     // Дополнительные маршруты для студентов
     GoRoute(
       path: '/student',
-      builder: (context, state) => MainShell(
-        currentRoute: '/student',
-        child: const StudentDashboard(),
-      ),
+      builder: (context, state) {
+        final tabIndex = int.tryParse(state.uri.queryParameters['tab'] ?? '1') ?? 1;
+        return AppShell(
+          currentRoute: '/student',
+          child: StudentNavigationScreen(tabIndex: tabIndex),
+        );
+      },
     ),
     GoRoute(
       path: '/student/courses',
-      builder: (context, state) => MainShell(
+      builder: (context, state) => AppShell(
         currentRoute: '/student/courses',
         child: const EnrolledCoursesScreen(),
       ),
     ),
     GoRoute(
       path: '/student/homework',
-      builder: (context, state) => MainShell(
+      builder: (context, state) => AppShell(
         currentRoute: '/student/homework',
         child: const StudentHomeworkScreen(),
       ),
@@ -186,9 +187,35 @@ final _router = GoRouter(
       path: '/course/:courseId',
       builder: (context, state) {
         final courseId = state.pathParameters['courseId']!;
-        final course = state.extra as Course?;
-        return MainShell(
-          currentRoute: '/courses',
+        final extra = state.extra;
+        Course? course;
+        if (extra is Map && extra['course'] != null) {
+          course = extra['course'] as Course;
+        } else if (extra is Course) {
+          course = extra;
+        }
+        return AppShell(
+          currentRoute: '/student/course/$courseId',
+          child: course != null
+              ? StudentCourseViewScreen(course: course)
+              : const Center(child: Text('Курс не найден')),
+        );
+      },
+    ),
+    // Алиас для студенческого раздела
+    GoRoute(
+      path: '/student/course/:courseId',
+      builder: (context, state) {
+        final courseId = state.pathParameters['courseId']!;
+        final extra = state.extra;
+        Course? course;
+        if (extra is Map && extra['course'] != null) {
+          course = extra['course'] as Course;
+        } else if (extra is Course) {
+          course = extra;
+        }
+        return AppShell(
+          currentRoute: '/student/course/$courseId',
           child: course != null
               ? StudentCourseViewScreen(course: course)
               : const Center(child: Text('Курс не найден')),
@@ -200,8 +227,23 @@ final _router = GoRouter(
       builder: (context, state) {
         final courseId = state.pathParameters['courseId']!;
         final lessonId = state.pathParameters['lessonId']!;
-        return MainShell(
-          currentRoute: '/courses',
+        return AppShell(
+          currentRoute: '/student/course/$courseId/lesson/$lessonId',
+          child: LessonViewByIdScreen(
+            courseId: courseId,
+            lessonId: lessonId,
+          ),
+        );
+      },
+    ),
+    // Алиас для студенческого раздела (урок)
+    GoRoute(
+      path: '/student/course/:courseId/lesson/:lessonId',
+      builder: (context, state) {
+        final courseId = state.pathParameters['courseId']!;
+        final lessonId = state.pathParameters['lessonId']!;
+        return AppShell(
+          currentRoute: '/student/course/$courseId/lesson/$lessonId',
           child: LessonViewByIdScreen(
             courseId: courseId,
             lessonId: lessonId,
@@ -213,8 +255,8 @@ final _router = GoRouter(
       path: '/admin/course/:courseId/edit',
       builder: (context, state) {
         final courseId = state.pathParameters['courseId']!;
-        return MainShell(
-          currentRoute: '/admin',
+        return AppShell(
+          currentRoute: '/admin/course/$courseId/edit',
           child: CourseContentScreen(courseId: courseId),
         );
       },
@@ -224,8 +266,8 @@ final _router = GoRouter(
       builder: (context, state) {
         final courseId = state.pathParameters['courseId']!;
         final lessonId = state.pathParameters['lessonId']!;
-        return MainShell(
-          currentRoute: '/admin',
+        return AppShell(
+          currentRoute: '/admin/course/$courseId/lesson/$lessonId/edit',
           child: LessonEditScreen(
             courseId: courseId,
             lessonId: lessonId,
