@@ -109,7 +109,6 @@ void _initializeTelegramWebApp() {
 }
 
 final _router = GoRouter(
-  initialLocation: '/',
   routes: [
     GoRoute(
       path: '/',
@@ -118,42 +117,28 @@ final _router = GoRouter(
     GoRoute(
       path: '/home',
       builder: (context, state) => AppShell(
-        currentRoute: '/home',
         child: const StudentNavigationScreen(tabIndex: 0),
       ),
     ),
     GoRoute(
       path: '/courses',
       builder: (context, state) => AppShell(
-        currentRoute: '/courses',
         child: const CourseListScreen(),
       ),
     ),
     GoRoute(
       path: '/admin',
-      builder: (context, state) => AppShell(
-        currentRoute: '/admin',
-        child: const AdminNavigationScreen(tabIndex: 0),
-      ),
+      builder: (context, state) {
+        final tabIndex = int.tryParse(state.uri.queryParameters['tab'] ?? '0') ?? 0;
+        return AppShell(
+          child: AdminNavigationScreen(tabIndex: tabIndex),
+        );
+      },
     ),
-    GoRoute(
-      path: '/admin/users',
-      builder: (context, state) => AppShell(
-        currentRoute: '/admin/users',
-        child: const AdminNavigationScreen(tabIndex: 1),
-      ),
-    ),
-    GoRoute(
-      path: '/admin/homework',
-      builder: (context, state) => AppShell(
-        currentRoute: '/admin/homework',
-        child: const AdminNavigationScreen(tabIndex: 2),
-      ),
-    ),
+
     GoRoute(
       path: '/admin/courses',
       builder: (context, state) => AppShell(
-        currentRoute: '/admin/courses',
         child: const CourseListScreen(),
       ),
     ),
@@ -163,7 +148,6 @@ final _router = GoRouter(
       builder: (context, state) {
         final tabIndex = int.tryParse(state.uri.queryParameters['tab'] ?? '1') ?? 1;
         return AppShell(
-          currentRoute: '/student',
           child: StudentNavigationScreen(tabIndex: tabIndex),
         );
       },
@@ -171,14 +155,12 @@ final _router = GoRouter(
     GoRoute(
       path: '/student/courses',
       builder: (context, state) => AppShell(
-        currentRoute: '/student/courses',
         child: const EnrolledCoursesScreen(),
       ),
     ),
     GoRoute(
       path: '/student/homework',
       builder: (context, state) => AppShell(
-        currentRoute: '/student/homework',
         child: const StudentHomeworkScreen(),
       ),
     ),
@@ -195,7 +177,6 @@ final _router = GoRouter(
           course = extra;
         }
         return AppShell(
-          currentRoute: '/student/course/$courseId',
           child: course != null
               ? StudentCourseViewScreen(course: course)
               : const Center(child: Text('Курс не найден')),
@@ -215,7 +196,6 @@ final _router = GoRouter(
           course = extra;
         }
         return AppShell(
-          currentRoute: '/student/course/$courseId',
           child: course != null
               ? StudentCourseViewScreen(course: course)
               : const Center(child: Text('Курс не найден')),
@@ -227,7 +207,6 @@ final _router = GoRouter(
       builder: (context, state) {
         final courseId = state.pathParameters['courseId']!;
         return AppShell(
-          currentRoute: '/admin/course/$courseId/edit',
           child: CourseContentScreen(courseId: courseId),
         );
       },
@@ -238,7 +217,6 @@ final _router = GoRouter(
         final courseId = state.pathParameters['courseId']!;
         final lessonId = state.pathParameters['lessonId']!;
         return AppShell(
-          currentRoute: '/admin/course/$courseId/lesson/$lessonId/edit',
           child: LessonEditScreen(
             courseId: courseId,
             lessonId: lessonId,
@@ -357,12 +335,20 @@ class _AuthWrapperState extends ConsumerState<AuthWrapper> {
         mainContent = userState.when(
           data: (user) {
             if (user != null) {
-              // Перенаправляем на главную страницу в зависимости от роли
+              // Перенаправляем только если пользователь на неподходящей странице
               WidgetsBinding.instance.addPostFrameCallback((_) {
+                final currentRoute = GoRouterState.of(context).fullPath ?? '/';
+                
                 if (user.isAdmin) {
-                  context.go('/admin');
+                  // Админ должен быть на /admin/* или /student/* страницах
+                  if (!currentRoute.startsWith('/admin') && !currentRoute.startsWith('/student') && !currentRoute.startsWith('/home')) {
+                    context.go('/admin');
+                  }
                 } else {
-                  context.go('/home');
+                  // Студент должен быть на /student/* или /home странице
+                  if (!currentRoute.startsWith('/student') && !currentRoute.startsWith('/home') && !currentRoute.startsWith('/course')) {
+                    context.go('/home');
+                  }
                 }
               });
               return const Scaffold(

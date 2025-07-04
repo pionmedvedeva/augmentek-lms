@@ -1,15 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:miniapp/features/course/providers/course_provider.dart';
-import 'package:miniapp/features/admin/presentation/widgets/create_course_dialog.dart';
-import 'package:miniapp/features/admin/presentation/widgets/course_card.dart';
-import 'package:miniapp/features/course/presentation/screens/course_content_screen.dart';
-import 'package:miniapp/shared/models/course.dart';
+
+import '../../../course/providers/course_provider.dart';
+import '../widgets/course_card.dart';
+import '../widgets/create_course_dialog.dart';
 
 class CourseManagementScreen extends ConsumerWidget {
-  final void Function(Course)? onOpenCourse;
-  const CourseManagementScreen({Key? key, this.onOpenCourse}) : super(key: key);
+  const CourseManagementScreen({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -60,13 +58,6 @@ class CourseManagementScreen extends ConsumerWidget {
                       onToggleStatus: (isActive) => ref
                           .read(courseProvider.notifier)
                           .toggleCourseStatus(course.id, isActive),
-                      onManageContent: () {
-                        if (onOpenCourse != null) {
-                          onOpenCourse!(course);
-                        } else {
-                          _navigateToCourseContent(context, course);
-                        }
-                      },
                     );
                   },
                 ),
@@ -95,10 +86,6 @@ class CourseManagementScreen extends ConsumerWidget {
         child: const Icon(Icons.add),
       ),
     );
-  }
-
-  void _navigateToCourseContent(BuildContext context, course) {
-    context.go('/admin/course/${course.id}/edit');
   }
 
   void _showCreateCourseDialog(BuildContext context, WidgetRef ref) {

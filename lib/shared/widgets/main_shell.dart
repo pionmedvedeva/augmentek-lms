@@ -14,14 +14,12 @@ import 'package:collection/collection.dart';
 /// Основной Shell с универсальной навигацией согласно UI Guidelines
 class AppShell extends ConsumerStatefulWidget {
   final Widget child;
-  final String currentRoute;
   final bool showBottomNav;
   final bool showAvatar;
 
   const AppShell({
     super.key,
     required this.child,
-    required this.currentRoute,
     this.showBottomNav = true,
     this.showAvatar = true,
   });
@@ -32,95 +30,43 @@ class AppShell extends ConsumerStatefulWidget {
 
 class _AppShellState extends ConsumerState<AppShell> 
     with SingleTickerProviderStateMixin {
-  int _currentIndex = 0;
-  TabController? _tabController;
-
-  @override
-  void initState() {
-    super.initState();
-    _updateCurrentIndex();
-    _initTabController();
-  }
-
-  @override
-  void didUpdateWidget(AppShell oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.currentRoute != widget.currentRoute) {
-      _updateCurrentIndex();
-      _initTabController();
-    }
-  }
-
-  @override
-  void dispose() {
-    _tabController?.dispose();
-    super.dispose();
-  }
-
-  void _initTabController() {
-    // Создаем TabController для студенческих экранов
-    if (_shouldShowStudentTabs()) {
-      _tabController?.dispose();
-      _tabController = TabController(length: 2, vsync: this);
-      
-      // Определяем начальный таб на основе маршрута или параметра
-      final uri = Uri.parse(widget.currentRoute);
-      final tabParam = uri.queryParameters['tab'];
-      int initialTab = 1; // По умолчанию "Учеба"
-      
-      if (tabParam != null) {
-        initialTab = int.tryParse(tabParam) ?? 1;
-      }
-      
-      _tabController!.index = initialTab;
-    }
-    // Создаем TabController для админских экранов
-    else if (_shouldShowAdminTabs()) {
-      _tabController?.dispose();
-      _tabController = TabController(length: 3, vsync: this);
-      
-      // Определяем текущий таб на основе маршрута
-      int initialTab = 0; // По умолчанию "Курсы"
-      if (widget.currentRoute == '/admin/users') {
-        initialTab = 1; // Пользователи
-      } else if (widget.currentRoute == '/admin/homework') {
-        initialTab = 2; // Домашки
-      }
-      
-      _tabController!.index = initialTab;
-    }
-  }
-
-  bool _shouldShowStudentTabs() {
-    // Показываем TabBar только на основных студенческих экранах (не во вложенных)
-    return widget.currentRoute == '/student' ||
-           (widget.currentRoute.startsWith('/student') && 
-            !widget.currentRoute.contains('/course/') &&
-            !widget.currentRoute.contains('/homework'));
-  }
-
-  bool _shouldShowAdminTabs() {
-    // Показываем админские табы на всех admin и admin/course экранах, включая вложенные (уроки, редактор и т.д.)
-    return widget.currentRoute == '/admin' ||
-           widget.currentRoute == '/admin/users' ||
-           widget.currentRoute == '/admin/homework' ||
-           widget.currentRoute.startsWith('/admin/course/');
-  }
-
-  void _updateCurrentIndex() {
-    // Определяем индекс на основе текущего маршрута (только для админов)
-    if (widget.currentRoute.startsWith('/admin')) {
-      _currentIndex = 0; // Учительская
-    } else if (widget.currentRoute.startsWith('/student') || widget.currentRoute.startsWith('/course') || widget.currentRoute.startsWith('/home')) {
-      _currentIndex = 1; // Студенческая
-    } else {
-      _currentIndex = 0; // По умолчанию Учительская
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
+    final currentRoute = GoRouterState.of(context).uri.toString();
     final user = ref.watch(userProvider);
+
+    // Определяем параметры для TabController
+    TabController? tabController;
+    int? tabLength;
+    int? initialTab;
+    if (user is AsyncData && user.value != null) {
+      if (_shouldShowStudentTabs(currentRoute)) {
+        tabLength = 2;
+        final uri = Uri.parse(currentRoute);
+        final tabParam = uri.queryParameters['tab'];
+        initialTab = tabParam != null ? int.tryParse(tabParam) ?? 1 : 1;
+      } else if (_shouldShowAdminTabs(currentRoute)) {
+        tabLength = 3;
+        final uri = Uri.parse(currentRoute);
+        final tabParam = uri.queryParameters['tab'];
+        initialTab = tabParam != null ? int.tryParse(tabParam) ?? 0 : 0;
+      }
+      if (tabLength != null && initialTab != null) {
+        tabController = TabController(
+          length: tabLength,
+          vsync: this,
+          initialIndex: initialTab,
+        );
+      }
+    }
+
+    // Определяем индекс нижней навигации
+    int currentIndex = 0;
+    if (currentRoute.startsWith('/admin')) {
+      currentIndex = 0;
+    } else if (currentRoute.startsWith('/student') || currentRoute.startsWith('/course') || currentRoute.startsWith('/home')) {
+      currentIndex = 1;
+    }
 
     return user.when(
       data: (appUser) {
@@ -177,11 +123,11 @@ class _AppShellState extends ConsumerState<AppShell>
           body: Column(
             children: [
               // Студенческий TabBar (Level 1 navigation)
-              if (_shouldShowStudentTabs() && _tabController != null)
+              if (_shouldShowStudentTabs(currentRoute) && tabController != null)
                 Container(
                   color: const Color(0xFF4A90B8), // primaryBlue
                   child: TabBar(
-                    controller: _tabController,
+                    controller: tabController,
                     indicatorColor: Colors.white,
                     labelColor: Colors.white,
                     unselectedLabelColor: Colors.white70,
@@ -199,11 +145,38 @@ class _AppShellState extends ConsumerState<AppShell>
                   ),
                 ),
               
+              // Админский TabBar (Level 1 navigation)
+              if (_shouldShowAdminTabs(currentRoute) && tabController != null)
+                Container(
+                  color: const Color(0xFF4A90B8), // primaryBlue
+                  child: TabBar(
+                    controller: tabController,
+                    indicatorColor: Colors.white,
+                    labelColor: Colors.white,
+                    unselectedLabelColor: Colors.white70,
+                    onTap: (index) => _onAdminTabChanged(index),
+                    tabs: const [
+                      Tab(
+                        icon: Icon(Icons.school),
+                        text: 'Курсы',
+                      ),
+                      Tab(
+                        icon: Icon(Icons.people),
+                        text: 'Пользователи',
+                      ),
+                      Tab(
+                        icon: Icon(Icons.assignment),
+                        text: 'Домашки',
+                      ),
+                    ],
+                  ),
+                ),
+              
               // Breadcrumbs (Level 2+ navigation)
-              if (widget.currentRoute.startsWith('/admin/course/'))
-                AdminCourseBreadcrumbs(currentRoute: widget.currentRoute)
-              else if (_shouldShowBreadcrumbs())
-                _buildBreadcrumbs(),
+              if (currentRoute.startsWith('/admin/course/'))
+                AdminCourseBreadcrumbs(currentRoute: currentRoute)
+              else if (_shouldShowBreadcrumbs(currentRoute))
+                _buildBreadcrumbs(currentRoute),
 
               // Основной контент
               Expanded(child: widget.child),
@@ -214,10 +187,10 @@ class _AppShellState extends ConsumerState<AppShell>
               bottom: MediaQuery.of(context).padding.bottom > 0 ? 4 : 0,
             ),
             child: BottomNavigationBar(
-              currentIndex: _currentIndex,
+              currentIndex: currentIndex,
               onTap: (index) {
                 setState(() {
-                  _currentIndex = index;
+                  currentIndex = index;
                 });
                 _navigateToTab(index, appUser);
               },
@@ -258,17 +231,30 @@ class _AppShellState extends ConsumerState<AppShell>
     );
   }
 
-  bool _shouldShowBreadcrumbs() {
-    // Показываем breadcrumbs для вложенных экранов (Level 2+)
-    return widget.currentRoute.contains('/course/') ||
-           widget.currentRoute.contains('/lesson/') ||
-           widget.currentRoute.contains('/homework') ||
-           widget.currentRoute.contains('/users/') ||
-           (widget.currentRoute.startsWith('/admin') && widget.currentRoute.contains('/course/'));
+  bool _shouldShowStudentTabs(String route) {
+    // Показываем TabBar только на основных студенческих экранах (не во вложенных)
+    return route == '/student' ||
+           (route.startsWith('/student') && 
+            !route.contains('/course/') &&
+            !route.contains('/homework'));
   }
 
-  Widget _buildBreadcrumbs() {
-    final parts = _getBreadcrumbParts();
+  bool _shouldShowAdminTabs(String route) {
+    // Показываем админские табы на всех admin экранах, включая с query параметрами
+    return route.startsWith('/admin') && !route.startsWith('/admin/course/');
+  }
+
+  bool _shouldShowBreadcrumbs(String route) {
+    // Показываем breadcrumbs для вложенных экранов (Level 2+)
+    return route.contains('/course/') ||
+           route.contains('/lesson/') ||
+           route.contains('/homework') ||
+           route.contains('/users/') ||
+           (route.startsWith('/admin') && route.contains('/course/'));
+  }
+
+  Widget _buildBreadcrumbs(String route) {
+    final parts = _getBreadcrumbParts(route);
     if (parts.isEmpty) return const SizedBox.shrink();
 
     return Container(
@@ -281,7 +267,7 @@ class _AppShellState extends ConsumerState<AppShell>
         children: [
           // Кнопка назад
           IconButton(
-            onPressed: () => _navigateBack(),
+            onPressed: () => _navigateBack(route),
             icon: const Icon(Icons.arrow_back),
             iconSize: 20,
             padding: EdgeInsets.zero,
@@ -319,36 +305,36 @@ class _AppShellState extends ConsumerState<AppShell>
     );
   }
 
-  List<String> _getBreadcrumbParts() {
+  List<String> _getBreadcrumbParts(String route) {
     final parts = <String>[];
     
-    if (widget.currentRoute.contains('/student/course/')) {
+    if (route.contains('/student/course/')) {
       parts.add('Учеба');
       parts.add('Курс');
       
-      if (widget.currentRoute.contains('/lesson/')) {
+      if (route.contains('/lesson/')) {
         parts.add('Урок');
       }
-    } else if (widget.currentRoute.contains('/course/') && !widget.currentRoute.startsWith('/admin')) {
+    } else if (route.contains('/course/') && !route.startsWith('/admin')) {
       // Старый формат студенческих маршрутов
       parts.add('Учеба');
       parts.add('Курс');
       
-      if (widget.currentRoute.contains('/lesson/')) {
+      if (route.contains('/lesson/')) {
         parts.add('Урок');
       }
-    } else if (widget.currentRoute.contains('/student/homework')) {
+    } else if (route.contains('/student/homework')) {
       parts.add('Учеба');
       parts.add('Домашние задания');
-    } else if (widget.currentRoute.contains('/admin/users/')) {
+    } else if (route.contains('/admin/users/')) {
       parts.add('Пользователи');
       parts.add('Профиль');
-    } else if (widget.currentRoute.startsWith('/admin') && widget.currentRoute.contains('/course/')) {
+    } else if (route.startsWith('/admin') && route.contains('/course/')) {
       parts.add('Курсы');
-      if (widget.currentRoute.contains('/lesson/') && widget.currentRoute.contains('/edit')) {
+      if (route.contains('/lesson/') && route.contains('/edit')) {
         parts.add('Редактирование курса');
         parts.add('Редактирование урока');
-      } else if (widget.currentRoute.contains('/edit')) {
+      } else if (route.contains('/edit')) {
         parts.add('Редактирование курса');
       }
     }
@@ -356,13 +342,13 @@ class _AppShellState extends ConsumerState<AppShell>
     return parts;
   }
 
-  void _navigateBack() {
+  void _navigateBack(String route) {
     // Логика навигации назад в рамках текущего таба
-    if (widget.currentRoute.contains('/lesson/')) {
+    if (route.contains('/lesson/')) {
       // Из урока возвращаемся к курсу
-      final courseId = RegExp(r'/course/([^/]+)').firstMatch(widget.currentRoute)?.group(1);
+      final courseId = RegExp(r'/course/([^/]+)').firstMatch(route)?.group(1);
       if (courseId != null) {
-        if (widget.currentRoute.startsWith('/admin')) {
+        if (route.startsWith('/admin')) {
           // Админский урок -> админский курс
           context.go('/admin/course/$courseId/edit');
         } else {
@@ -370,21 +356,21 @@ class _AppShellState extends ConsumerState<AppShell>
           context.go('/student/course/$courseId');
         }
       }
-    } else if (widget.currentRoute.contains('/course/')) {
+    } else if (route.contains('/course/')) {
       // Из курса возвращаемся к списку
-      if (widget.currentRoute.startsWith('/admin')) {
+      if (route.startsWith('/admin')) {
         // Админский курс -> список курсов
         context.go('/admin');
       } else {
         // Студенческий курс -> учеба
         context.go('/student?tab=1');
       }
-    } else if (widget.currentRoute.contains('/student/homework')) {
+    } else if (route.contains('/student/homework')) {
       // Из домашек возвращаемся к учебе
       context.go('/student?tab=1');
-    } else if (widget.currentRoute.contains('/admin/users/')) {
+    } else if (route.contains('/admin/users/')) {
       // Из профиля пользователя к списку пользователей
-      context.go('/admin/users');
+      context.go('/admin?tab=1');
     } else {
       // Дефолтное поведение - просто назад
       if (context.canPop()) {
@@ -400,17 +386,7 @@ class _AppShellState extends ConsumerState<AppShell>
 
   void _onAdminTabChanged(int index) {
     // Навигация между админскими табами
-    switch (index) {
-      case 0:
-        context.go('/admin'); // Курсы
-        break;
-      case 1:
-        context.go('/admin/users'); // Пользователи
-        break;
-      case 2:
-        context.go('/admin/homework'); // Домашки
-        break;
-    }
+    context.go('/admin?tab=$index');
   }
 
   void _navigateToTab(int index, appUser) {

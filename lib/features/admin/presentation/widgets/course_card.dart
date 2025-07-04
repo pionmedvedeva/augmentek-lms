@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:miniapp/shared/models/course.dart';
 import 'package:miniapp/features/course/providers/course_stats_provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -10,7 +11,6 @@ class CourseCard extends ConsumerWidget {
   final VoidCallback onEditDescription;
   final VoidCallback onDelete;
   final Function(bool) onToggleStatus;
-  final VoidCallback? onManageContent;
 
   const CourseCard({
     super.key,
@@ -19,8 +19,11 @@ class CourseCard extends ConsumerWidget {
     required this.onEditDescription,
     required this.onDelete,
     required this.onToggleStatus,
-    this.onManageContent,
   });
+
+  void _navigateToManageContent(BuildContext context) {
+    context.go('/admin/course/${course.id}/edit');
+  }
 
     @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -90,7 +93,7 @@ class CourseCard extends ConsumerWidget {
                           children: [
                             Expanded(
                               child: InkWell(
-                                onTap: onManageContent,
+                                onTap: () => _navigateToManageContent(context),
                                 borderRadius: BorderRadius.circular(4),
                                 child: Padding(
                                   padding: const EdgeInsets.symmetric(vertical: 2),
@@ -99,7 +102,7 @@ class CourseCard extends ConsumerWidget {
                                     style: TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.w600,
-                                      color: onManageContent != null ? Colors.blue[600] : null,
+                                      color: Colors.blue[600],
                                     ),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
@@ -189,88 +192,87 @@ class CourseCard extends ConsumerWidget {
                       const SizedBox(width: 16),
                       
                       // Управление содержимым (кликабельное)
-                      if (onManageContent != null)
-                        InkWell(
-                          onTap: onManageContent,
-                          borderRadius: BorderRadius.circular(4),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                            child: courseStats.when(
-                              data: (stats) => Row(
-                                children: [
-                                  Icon(
-                                    Icons.folder_outlined,
-                                    size: 14,
-                                    color: Colors.blue[600],
-                                  ),
-                                  const SizedBox(width: 2),
-                                  Text(
-                                    '${stats.sectionsCount}',
-                                    style: TextStyle(
-                                      color: Colors.blue[600],
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Icon(
-                                    Icons.play_circle_outline,
-                                    size: 14,
-                                    color: Colors.blue[600],
-                                  ),
-                                  const SizedBox(width: 2),
-                                  Text(
-                                    '${stats.lessonsCount}',
-                                    style: TextStyle(
-                                      color: Colors.blue[600],
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              loading: () => SizedBox(
-                                width: 12,
-                                height: 12,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.blue[600]!),
+                                             InkWell(
+                         onTap: () => _navigateToManageContent(context),
+                        borderRadius: BorderRadius.circular(4),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                          child: courseStats.when(
+                            data: (stats) => Row(
+                              children: [
+                                Icon(
+                                  Icons.folder_outlined,
+                                  size: 14,
+                                  color: Colors.blue[600],
                                 ),
+                                const SizedBox(width: 2),
+                                Text(
+                                  '${stats.sectionsCount}',
+                                  style: TextStyle(
+                                    color: Colors.blue[600],
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Icon(
+                                  Icons.play_circle_outline,
+                                  size: 14,
+                                  color: Colors.blue[600],
+                                ),
+                                const SizedBox(width: 2),
+                                Text(
+                                  '${stats.lessonsCount}',
+                                  style: TextStyle(
+                                    color: Colors.blue[600],
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            loading: () => SizedBox(
+                              width: 12,
+                              height: 12,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(Colors.blue[600]!),
                               ),
-                              error: (_, __) => Row(
-                                children: [
-                                  Icon(
-                                    Icons.folder_outlined,
-                                    size: 14,
+                            ),
+                            error: (_, __) => Row(
+                              children: [
+                                Icon(
+                                  Icons.folder_outlined,
+                                  size: 14,
+                                  color: Colors.grey[400],
+                                ),
+                                const SizedBox(width: 2),
+                                Text(
+                                  '—',
+                                  style: TextStyle(
                                     color: Colors.grey[400],
+                                    fontSize: 12,
                                   ),
-                                  const SizedBox(width: 2),
-                                  Text(
-                                    '—',
-                                    style: TextStyle(
-                                      color: Colors.grey[400],
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Icon(
-                                    Icons.play_circle_outline,
-                                    size: 14,
+                                ),
+                                const SizedBox(width: 8),
+                                Icon(
+                                  Icons.play_circle_outline,
+                                  size: 14,
+                                  color: Colors.grey[400],
+                                ),
+                                const SizedBox(width: 2),
+                                Text(
+                                  '—',
+                                  style: TextStyle(
                                     color: Colors.grey[400],
+                                    fontSize: 12,
                                   ),
-                                  const SizedBox(width: 2),
-                                  Text(
-                                    '—',
-                                    style: TextStyle(
-                                      color: Colors.grey[400],
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ],
-                              ),
+                                ),
+                              ],
                             ),
                           ),
                         ),
+                      ),
                       
                       const Spacer(),
                       
