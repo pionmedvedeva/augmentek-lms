@@ -10,6 +10,7 @@ import 'package:miniapp/features/course/providers/course_provider.dart';
 import 'package:miniapp/features/course/providers/lesson_provider.dart';
 import 'package:miniapp/shared/models/course.dart';
 import 'package:collection/collection.dart';
+import 'package:miniapp/main.dart' show AuthWrapper;
 
 /// Основной Shell с универсальной навигацией согласно UI Guidelines
 class AppShell extends ConsumerStatefulWidget {
@@ -71,7 +72,8 @@ class _AppShellState extends ConsumerState<AppShell>
     return user.when(
       data: (appUser) {
         if (appUser == null) {
-          return widget.child;
+          // Показываем AuthWrapper для инициации аутентификации
+          return const AuthWrapper();
         }
 
         // Определяем список табов только для админов (BottomNav)
