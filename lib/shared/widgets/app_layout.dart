@@ -176,24 +176,24 @@ class _AppLayoutState extends ConsumerState<AppLayout>
       ) : null,
     );
 
-    // Добавляем плавающую debug-кнопку
-    if (shouldShowDebugPanel) {
-      mainContent = Stack(
-        children: [
-          mainContent,
-          Positioned(
-            top: 16,
-            right: 16,
-            child: FloatingActionButton.small(
-              onPressed: () => _navigationService.showDebugLogs(context),
-              backgroundColor: Colors.blue,
-              foregroundColor: Colors.white,
-              child: const Icon(Icons.bug_report),
-            ),
-          ),
-        ],
-      );
-    }
+    // Удаляю Stack с debug-кнопкой, оставляю только Scaffold
+    // if (shouldShowDebugPanel) {
+    //   mainContent = Stack(
+    //     children: [
+    //       mainContent,
+    //       Positioned(
+    //         top: 16,
+    //         right: 16,
+    //         child: FloatingActionButton.small(
+    //           onPressed: () => _navigationService.showDebugLogs(context),
+    //           backgroundColor: Colors.blue,
+    //           foregroundColor: Colors.white,
+    //           child: const Icon(Icons.bug_report),
+    //         ),
+    //       ),
+    //     ],
+    //   );
+    // }
 
     return mainContent;
   }
