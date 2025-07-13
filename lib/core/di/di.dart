@@ -12,6 +12,7 @@ import 'package:miniapp/features/course/repositories/course_repository.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import '../config/app_environment.dart';
 import '../cache/app_cache.dart';
+import 'package:miniapp/features/student/presentation/screens/student_navigation_screen.dart';
 
 final loggerProvider = Provider<Logger>((ref) {
   return Logger(
@@ -49,7 +50,7 @@ final routerProvider = Provider<GoRouter>((ref) {
     routes: [
       GoRoute(
         path: '/',
-        builder: (context, state) => const HomeScreen(),
+        builder: (context, state) => const StudentNavigationScreen(),
       ),
     ],
   );
