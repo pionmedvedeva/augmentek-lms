@@ -72,8 +72,8 @@ class _AppShellState extends ConsumerState<AppShell>
     return user.when(
       data: (appUser) {
         if (appUser == null) {
-          // Показываем AuthWrapper для инициации аутентификации
-          return const AuthWrapper();
+          // Показываем loader, если пользователь не найден
+          return const Scaffold(body: Center(child: CircularProgressIndicator()));
         }
 
         // Определяем список табов только для админов (BottomNav)

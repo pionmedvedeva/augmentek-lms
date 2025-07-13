@@ -31,6 +31,7 @@ import 'package:miniapp/shared/widgets/main_shell.dart';
 import 'package:url_strategy/url_strategy.dart';
 import 'package:telegram_web_app/telegram_web_app.dart';
 import 'package:miniapp/features/admin/presentation/screens/admin_navigation_screen.dart';
+import 'package:miniapp/core/wrappers/authentication_wrapper.dart';
 
 // Глобальная ссылка на ProviderContainer для логирования
 late final ProviderContainer _globalContainer;
@@ -112,17 +113,17 @@ final _router = GoRouter(
   routes: [
     GoRoute(
       path: '/',
-      builder: (context, state) => const AuthWrapper(),
+      builder: (context, state) => const AuthenticationWrapper(),
     ),
     GoRoute(
       path: '/home',
-      builder: (context, state) => AppShell(
+      builder: (context, state) => AuthenticationWrapper(
         child: const StudentNavigationScreen(tabIndex: 0),
       ),
     ),
     GoRoute(
       path: '/courses',
-      builder: (context, state) => AppShell(
+      builder: (context, state) => AuthenticationWrapper(
         child: const CourseListScreen(),
       ),
     ),
@@ -130,15 +131,14 @@ final _router = GoRouter(
       path: '/admin',
       builder: (context, state) {
         final tabIndex = int.tryParse(state.uri.queryParameters['tab'] ?? '0') ?? 0;
-        return AppShell(
+        return AuthenticationWrapper(
           child: AdminNavigationScreen(tabIndex: tabIndex),
         );
       },
     ),
-
     GoRoute(
       path: '/admin/courses',
-      builder: (context, state) => AppShell(
+      builder: (context, state) => AuthenticationWrapper(
         child: const CourseListScreen(),
       ),
     ),
@@ -147,20 +147,20 @@ final _router = GoRouter(
       path: '/student',
       builder: (context, state) {
         final tabIndex = int.tryParse(state.uri.queryParameters['tab'] ?? '1') ?? 1;
-        return AppShell(
+        return AuthenticationWrapper(
           child: StudentNavigationScreen(tabIndex: tabIndex),
         );
       },
     ),
     GoRoute(
       path: '/student/courses',
-      builder: (context, state) => AppShell(
+      builder: (context, state) => AuthenticationWrapper(
         child: const EnrolledCoursesScreen(),
       ),
     ),
     GoRoute(
       path: '/student/homework',
-      builder: (context, state) => AppShell(
+      builder: (context, state) => AuthenticationWrapper(
         child: const StudentHomeworkScreen(),
       ),
     ),
@@ -176,7 +176,7 @@ final _router = GoRouter(
         } else if (extra is Course) {
           course = extra;
         }
-        return AppShell(
+        return AuthenticationWrapper(
           child: course != null
               ? StudentCourseViewScreen(course: course)
               : const Center(child: Text('Курс не найден')),
@@ -195,7 +195,7 @@ final _router = GoRouter(
         } else if (extra is Course) {
           course = extra;
         }
-        return AppShell(
+        return AuthenticationWrapper(
           child: course != null
               ? StudentCourseViewScreen(course: course)
               : const Center(child: Text('Курс не найден')),
@@ -206,7 +206,7 @@ final _router = GoRouter(
       path: '/admin/course/:courseId/edit',
       builder: (context, state) {
         final courseId = state.pathParameters['courseId']!;
-        return AppShell(
+        return AuthenticationWrapper(
           child: CourseContentScreen(courseId: courseId),
         );
       },
@@ -216,7 +216,7 @@ final _router = GoRouter(
       builder: (context, state) {
         final courseId = state.pathParameters['courseId']!;
         final lessonId = state.pathParameters['lessonId']!;
-        return AppShell(
+        return AuthenticationWrapper(
           child: LessonEditScreen(
             courseId: courseId,
             lessonId: lessonId,
@@ -230,7 +230,7 @@ final _router = GoRouter(
       builder: (context, state) {
         final courseId = state.pathParameters['courseId']!;
         final lessonId = state.pathParameters['lessonId']!;
-        return AppShell(
+        return AuthenticationWrapper(
           child: LessonViewByIdScreen(
             courseId: courseId,
             lessonId: lessonId,
@@ -240,190 +240,6 @@ final _router = GoRouter(
     ),
   ],
 );
-
-class AuthWrapper extends ConsumerStatefulWidget {
-  const AuthWrapper({super.key});
-
-  @override
-  ConsumerState<AuthWrapper> createState() => _AuthWrapperState();
-}
-
-class _AuthWrapperState extends ConsumerState<AuthWrapper> {
-  bool _hasTriggeredSignIn = false;
-
-  @override
-  void initState() {
-    super.initState();
-    // Trigger sign in once when widget is created with a small delay
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!_hasTriggeredSignIn) {
-        _hasTriggeredSignIn = true;
-        ref.read(debugLogsProvider.notifier).addLog('🔧 App initialized, starting auth...');
-        
-        // Дополнительно расширяем интерфейс
-        _expandTelegramWebApp();
-        
-        // Add a small delay to ensure Firebase is fully initialized
-        Future.delayed(const Duration(milliseconds: 500), () {
-          ref.read(authProvider.notifier).signInAutomatically();
-        });
-      }
-    });
-  }
-
-  void _expandTelegramWebApp() {
-    try {
-      final webApp = TelegramWebApp.instance;
-      
-      // Однократный запрос fullsize режима
-      webApp.expand();
-      
-      ref.read(debugLogsProvider.notifier).addLog('📱 Requested fullsize mode');
-      ref.read(debugLogsProvider.notifier).addLog('📏 Viewport height: ${webApp.viewportHeight}px');
-    } catch (e) {
-      ref.read(debugLogsProvider.notifier).addLog('❌ Error requesting fullsize: $e');
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final authState = ref.watch(authStateProvider);
-    final userState = ref.watch(userProvider);
-
-    // Определяем, показывать ли debug логи
-    final webApp = TelegramWebApp.instance;
-    final isInTelegram = webApp.initDataUnsafe?.user != null;
-    
-    // В debug режиме всегда показываем debug панель, в релизе - только в Telegram
-    bool shouldShowDebugPanel;
-    try {
-      shouldShowDebugPanel = kDebugMode || isInTelegram;
-    } catch (e) {
-      // Fallback если возникла ошибка с TelegramWebApp
-      shouldShowDebugPanel = kDebugMode;
-    }
-
-    Widget mainContent;
-
-    // Show loading while auth state is loading
-    if (authState is AsyncLoading) {
-      mainContent = const Scaffold(
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              CircularProgressIndicator(),
-              SizedBox(height: 16),
-              Text('Loading authentication...'),
-            ],
-          ),
-        ),
-      );
-    }
-    // Show error if auth state has error
-    else if (authState is AsyncError) {
-      mainContent = AppErrorWidget(
-        error: authState.error.toString(),
-        onRetry: () => ref.read(authProvider.notifier).signInAutomatically(),
-      );
-    }
-    else {
-      // Check if user is authenticated in Firebase
-      final firebaseUser = authState.valueOrNull;
-      if (firebaseUser == null) {
-        // User is not authenticated, show loading while trying to sign in
-        mainContent = const Scaffold(
-          body: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                CircularProgressIndicator(),
-                SizedBox(height: 16),
-                Text('Signing in...'),
-              ],
-            ),
-          ),
-        );
-      } else {
-        // User is authenticated, now check user data
-        mainContent = userState.when(
-          data: (user) {
-            if (user != null) {
-              // Перенаправляем только если пользователь на неподходящей странице
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                final currentRoute = GoRouterState.of(context).fullPath ?? '/';
-                
-                if (user.isAdmin) {
-                  // Админ должен быть на /admin/* или /student/* страницах
-                  if (!currentRoute.startsWith('/admin') && !currentRoute.startsWith('/student') && !currentRoute.startsWith('/home')) {
-                    context.go('/admin');
-                  }
-                } else {
-                  // Студент должен быть на /student/* или /home странице
-                  if (!currentRoute.startsWith('/student') && !currentRoute.startsWith('/home') && !currentRoute.startsWith('/course')) {
-                    context.go('/home');
-                  }
-                }
-              });
-              return const Scaffold(
-                body: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      CircularProgressIndicator(),
-                      SizedBox(height: 16),
-                      Text('Перенаправление...'),
-                    ],
-                  ),
-                ),
-              );
-            } else {
-              // User authenticated but no user data, show loading
-              return const Scaffold(
-                body: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      CircularProgressIndicator(),
-                      SizedBox(height: 16),
-                      Text('Loading user data...'),
-                    ],
-                  ),
-                ),
-              );
-            }
-          },
-          loading: () => const Scaffold(
-            body: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  CircularProgressIndicator(),
-                  SizedBox(height: 16),
-                  Text('Loading user data...'),
-                ],
-              ),
-            ),
-          ),
-          error: (error, stack) => AppErrorWidget(
-            error: error.toString(),
-            onRetry: () => ref.read(authProvider.notifier).signInAutomatically(),
-          ),
-        );
-      }
-    }
-
-    // Wrap with debug screen if needed
-    if (shouldShowDebugPanel) {
-      return DebugLogScreen(
-        child: mainContent,
-        showLogs: true,
-      );
-    } else {
-      return mainContent;
-    }
-  }
-}
 
 class AppInitializerWrapper extends ConsumerStatefulWidget {
   const AppInitializerWrapper({super.key});
