@@ -224,6 +224,20 @@ final _router = GoRouter(
         );
       },
     ),
+    // Маршрут для просмотра урока студентом
+    GoRoute(
+      path: '/student/course/:courseId/lesson/:lessonId',
+      builder: (context, state) {
+        final courseId = state.pathParameters['courseId']!;
+        final lessonId = state.pathParameters['lessonId']!;
+        return AppShell(
+          child: LessonViewByIdScreen(
+            courseId: courseId,
+            lessonId: lessonId,
+          ),
+        );
+      },
+    ),
   ],
 );
 
