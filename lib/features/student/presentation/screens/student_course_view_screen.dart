@@ -124,6 +124,18 @@ class StudentCourseViewScreen extends ConsumerWidget {
           const SizedBox(height: 12),
           ...directLessons.map((lesson) => _buildLessonCard(context, ref, lesson)),
           const SizedBox(height: 16),
+        ] else if (courseLessons.isNotEmpty) ...[
+          // Если есть уроки, но все они в разделах, показываем их все
+          const Text(
+            'Уроки курса',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 12),
+          ...courseLessons.map((lesson) => _buildLessonCard(context, ref, lesson)),
+          const SizedBox(height: 16),
         ],
 
         // Разделы с уроками

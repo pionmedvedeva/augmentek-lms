@@ -20,6 +20,7 @@ class SectionNotifier extends StateNotifier<AsyncValue<List<Section>>> {
       final snapshot = await _firestore
           .collection('sections')
           .where('courseId', isEqualTo: _courseId)
+          .where('isActive', isEqualTo: true) // Добавляем фильтр по активности
           .get();
 
       final sections = snapshot.docs
