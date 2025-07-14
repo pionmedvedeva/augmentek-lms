@@ -6,9 +6,13 @@ import 'package:miniapp/shared/models/section.dart';
 import 'package:miniapp/shared/models/lesson.dart';
 import 'package:miniapp/features/course/providers/section_provider.dart';
 import 'package:miniapp/features/course/providers/lesson_provider.dart';
+import 'package:miniapp/features/course/providers/course_provider.dart';
 import 'package:miniapp/features/course/presentation/screens/lesson_edit_screen.dart';
 import 'package:miniapp/features/course/presentation/screens/lesson_view_screen.dart';
 import 'package:miniapp/features/course/presentation/screens/course_content_reorderable_screen.dart';
+import 'package:miniapp/shared/widgets/image_upload_widget.dart';
+import 'package:miniapp/services/storage_service.dart';
+import 'dart:typed_data';
 
 final editingSectionIdProvider = StateProvider<String?>((ref) => null);
 final editingLessonIdProvider = StateProvider<String?>((ref) => null);
@@ -17,7 +21,13 @@ enum EditStatus { idle, loading, success, error }
 final sectionEditStatusProvider = StateProvider<Map<String, EditStatus>>((ref) => {});
 final lessonEditStatusProvider = StateProvider<Map<String, EditStatus>>((ref) => {});
 
-class CourseContentScreen extends ConsumerWidget {
+// Провайдеры для редактирования метаданных курса
+final courseMetadataEditingProvider = StateProvider<bool>((ref) => false);
+final courseMetadataChangedProvider = StateProvider<bool>((ref) => false);
+final courseImageUploadProvider = StateProvider<Uint8List?>((ref) => null);
+final courseImageFileNameProvider = StateProvider<String?>((ref) => null);
+
+class CourseContentScreen extends ConsumerStatefulWidget {
   final String courseId;
 
   const CourseContentScreen({
@@ -26,27 +36,244 @@ class CourseContentScreen extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final sectionsAsync = ref.watch(sectionProvider(courseId));
-    final lessonsAsync = ref.watch(courseLessonsProvider(courseId));
+  ConsumerState<CourseContentScreen> createState() => _CourseContentScreenState();
+}
 
-    return sectionsAsync.when(
-      data: (sections) => lessonsAsync.when(
-        data: (lessons) => _buildContent(context, ref, sections, lessons),
+class _CourseContentScreenState extends ConsumerState<CourseContentScreen> {
+  late final TextEditingController _titleController;
+  late final TextEditingController _descriptionController;
+  late final TextEditingController _tagsController;
+  
+  bool get _isNewCourse => widget.courseId == 'new';
+  Course? _currentCourse;
+
+  @override
+  void initState() {
+    super.initState();
+    _titleController = TextEditingController();
+    _descriptionController = TextEditingController();
+    _tagsController = TextEditingController();
+    
+    if (_isNewCourse) {
+      // Для нового курса инициализируем пустые поля
+      _titleController.text = '';
+      _descriptionController.text = '';
+      _tagsController.text = '';
+    }
+  }
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _descriptionController.dispose();
+    _tagsController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_isNewCourse) {
+      // Для нового курса показываем только секцию метаданных
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('Создание курса'),
+          actions: [
+            Padding(
+              padding: const EdgeInsets.only(right: 16),
+              child: ElevatedButton(
+                onPressed: _createNewCourse,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  foregroundColor: Colors.white,
+                ),
+                child: const Text('Создать'),
+              ),
+            ),
+          ],
+        ),
+        body: _buildMetadataSection(context, ref, null),
+      );
+    } else {
+      // Для существующего курса загружаем данные
+      final coursesAsync = ref.watch(courseProvider);
+      final sectionsAsync = ref.watch(sectionProvider(widget.courseId));
+      final lessonsAsync = ref.watch(courseLessonsProvider(widget.courseId));
+
+      return coursesAsync.when(
+        data: (courses) {
+          _currentCourse = courses.firstWhere(
+            (c) => c.id == widget.courseId,
+            orElse: () => throw Exception('Курс не найден'),
+          );
+          
+          // Обновляем контроллеры при первой загрузке
+          if (_titleController.text.isEmpty) {
+            _titleController.text = _currentCourse!.title;
+            _descriptionController.text = _currentCourse!.description;
+            _tagsController.text = _currentCourse!.tags.join(', ');
+          }
+
+          return sectionsAsync.when(
+            data: (sections) => lessonsAsync.when(
+              data: (lessons) => _buildFullContent(context, ref, _currentCourse!, sections, lessons),
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (error, stack) => Center(child: Text('Ошибка загрузки уроков: $error')),
+            ),
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (error, stack) => Center(child: Text('Ошибка загрузки разделов: $error')),
+          );
+        },
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(child: Text('Ошибка загрузки уроков: $error')),
+        error: (error, stack) => Center(child: Text('Ошибка загрузки курса: $error')),
+      );
+    }
+  }
+
+  Future<void> _createNewCourse() async {
+    if (_titleController.text.trim().isEmpty || _descriptionController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Название и описание обязательны')),
+      );
+      return;
+    }
+
+    try {
+      final tags = _tagsController.text
+          .split(',')
+          .map((tag) => tag.trim())
+          .where((tag) => tag.isNotEmpty)
+          .toList();
+
+      String? imageUrl;
+      final imageBytes = ref.read(courseImageUploadProvider);
+      final imageFileName = ref.read(courseImageFileNameProvider);
+
+      // Загружаем изображение если выбрано
+      if (imageBytes != null && imageFileName != null) {
+        final tempId = DateTime.now().millisecondsSinceEpoch.toString();
+        imageUrl = await ref.read(storageServiceProvider).uploadCourseImage(
+          courseId: tempId,
+          imageBytes: imageBytes,
+          fileName: imageFileName,
+        );
+      }
+
+      final newCourse = Course(
+        id: '', // Будет установлен в CourseProvider
+        title: _titleController.text.trim(),
+        description: _descriptionController.text.trim(),
+        tags: tags,
+        imageUrl: imageUrl,
+        isActive: true,
+        enrolledCount: 0,
+        createdBy: '', // TODO: установить текущего пользователя
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      );
+
+      final courseId = await ref.read(courseProvider.notifier).createCourse(newCourse);
+      
+      if (mounted) {
+        context.go('/admin/course/$courseId/edit');
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Курс создан успешно')),
+        );
+      }
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Ошибка создания курса: $error')),
+        );
+      }
+    }
+  }
+
+  Future<void> _saveCourseMetadata() async {
+    if (_currentCourse == null) return;
+
+    try {
+      final tags = _tagsController.text
+          .split(',')
+          .map((tag) => tag.trim())
+          .where((tag) => tag.isNotEmpty)
+          .toList();
+
+      String? imageUrl = _currentCourse!.imageUrl;
+      final imageBytes = ref.read(courseImageUploadProvider);
+      final imageFileName = ref.read(courseImageFileNameProvider);
+
+      // Загружаем новое изображение если выбрано
+      if (imageBytes != null && imageFileName != null) {
+        imageUrl = await ref.read(storageServiceProvider).uploadCourseImage(
+          courseId: _currentCourse!.id,
+          imageBytes: imageBytes,
+          fileName: imageFileName,
+        );
+      }
+
+      final updatedCourse = _currentCourse!.copyWith(
+        title: _titleController.text.trim(),
+        description: _descriptionController.text.trim(),
+        tags: tags,
+        imageUrl: imageUrl,
+        updatedAt: DateTime.now(),
+      );
+
+      await ref.read(courseProvider.notifier).updateCourse(updatedCourse);
+      
+      // Сбрасываем флаги изменения
+      ref.read(courseMetadataChangedProvider.notifier).state = false;
+      ref.read(courseImageUploadProvider.notifier).state = null;
+      ref.read(courseImageFileNameProvider.notifier).state = null;
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Курс обновлен успешно')),
+        );
+      }
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Ошибка обновления курса: $error')),
+        );
+      }
+    }
+  }
+
+  Widget _buildFullContent(BuildContext context, WidgetRef ref, Course course, List<Section> sections, List<Lesson> lessons) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Редактирование: ${course.title}'),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 16),
+            child: ElevatedButton(
+              onPressed: _saveCourseMetadata,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Сохранить'),
+            ),
+          ),
+        ],
       ),
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, stack) => Center(child: Text('Ошибка загрузки разделов: $error')),
+      body: _buildContent(context, ref, course, sections, lessons),
     );
   }
 
-  Widget _buildContent(BuildContext context, WidgetRef ref, List<Section> sections, List<Lesson> lessons) {
+  Widget _buildContent(BuildContext context, WidgetRef ref, Course? course, List<Section> sections, List<Lesson> lessons) {
     final directLessons = lessons.where((l) => l.sectionId == null).toList();
 
     return ListView(
       padding: EdgeInsets.zero,
       children: [
+        // Секция метаданных курса (только для существующих курсов)
+        if (course != null) _buildMetadataSection(context, ref, course),
+        
+        // Разделитель
+        if (course != null) const Divider(thickness: 2, height: 32),
+        
         // Чипы
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
@@ -67,7 +294,7 @@ class CourseContentScreen extends ConsumerWidget {
             child: SizedBox(
               width: double.infinity,
               child: OutlinedButton.icon(
-                onPressed: () => _showCreateLessonDialog(context, ref, null),
+                                  onPressed: () => _showCreateLessonDialog(context, ref, _currentCourse?.id ?? widget.courseId, null),
                 icon: const Icon(Icons.add),
                 label: const Text('Добавить урок'),
                 style: OutlinedButton.styleFrom(
@@ -85,7 +312,7 @@ class CourseContentScreen extends ConsumerWidget {
           child: SizedBox(
             width: double.infinity,
             child: OutlinedButton.icon(
-              onPressed: () => _showCreateSectionDialog(context, ref),
+              onPressed: () => _showCreateSectionDialog(context, ref, _currentCourse?.id ?? widget.courseId),
               icon: const Icon(Icons.add),
               label: const Text('Добавить раздел'),
               style: OutlinedButton.styleFrom(
@@ -96,6 +323,100 @@ class CourseContentScreen extends ConsumerWidget {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildMetadataSection(BuildContext context, WidgetRef ref, Course? course) {
+    return Container(
+      margin: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.grey[50],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey[300]!),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.settings, color: Colors.blue[700]),
+              const SizedBox(width: 8),
+              Text(
+                'Настройки курса',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.blue[700],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          
+          // Загрузка изображения
+          ImageUploadWidget(
+            initialImageUrl: course?.imageUrl,
+            onImageSelected: (bytes, fileName) {
+              ref.read(courseImageUploadProvider.notifier).state = bytes;
+              ref.read(courseImageFileNameProvider.notifier).state = fileName;
+              ref.read(courseMetadataChangedProvider.notifier).state = true;
+            },
+            onImageRemoved: () {
+              ref.read(courseImageUploadProvider.notifier).state = null;
+              ref.read(courseImageFileNameProvider.notifier).state = null;
+              ref.read(courseMetadataChangedProvider.notifier).state = true;
+            },
+          ),
+          const SizedBox(height: 20),
+
+          // Название курса
+          TextField(
+            controller: _titleController,
+            decoration: const InputDecoration(
+              labelText: 'Название курса',
+              hintText: 'Введите название курса',
+              border: OutlineInputBorder(),
+              prefixIcon: Icon(Icons.title),
+            ),
+            onChanged: (value) {
+              ref.read(courseMetadataChangedProvider.notifier).state = true;
+            },
+          ),
+          const SizedBox(height: 16),
+
+          // Краткое описание
+          TextField(
+            controller: _descriptionController,
+            decoration: const InputDecoration(
+              labelText: 'Краткое описание',
+              hintText: 'Введите краткое описание курса',
+              border: OutlineInputBorder(),
+              prefixIcon: Icon(Icons.description),
+            ),
+            maxLines: 3,
+            onChanged: (value) {
+              ref.read(courseMetadataChangedProvider.notifier).state = true;
+            },
+          ),
+          const SizedBox(height: 16),
+
+          // Теги
+          TextField(
+            controller: _tagsController,
+            decoration: const InputDecoration(
+              labelText: 'Теги',
+              hintText: 'Введите теги через запятую',
+              border: OutlineInputBorder(),
+              prefixIcon: Icon(Icons.tag),
+              helperText: 'Разделите теги запятыми: программирование, Flutter, мобильная разработка',
+            ),
+            onChanged: (value) {
+              ref.read(courseMetadataChangedProvider.notifier).state = true;
+            },
+          ),
+        ],
+      ),
     );
   }
 
@@ -111,8 +432,8 @@ class CourseContentScreen extends ConsumerWidget {
         final updated = List<Section>.from(sortedSections);
         final moved = updated.removeAt(oldIndex);
         updated.insert(newIndex, moved);
-        await ref.read(sectionProvider(courseId).notifier).reorderSections(updated);
-        ref.invalidate(sectionProvider(courseId));
+        await ref.read(sectionProvider(_currentCourse?.id ?? widget.courseId).notifier).reorderSections(updated);
+        ref.invalidate(sectionProvider(_currentCourse?.id ?? widget.courseId));
       },
       itemBuilder: (context, i) => _buildSectionTile(context, ref, sortedSections[i], lessons, i, Key('section_${sortedSections[i].id}')),
     );
@@ -130,7 +451,7 @@ class CourseContentScreen extends ConsumerWidget {
       if (newTitle.isNotEmpty && newTitle != section.title) {
         ref.read(sectionEditStatusProvider.notifier).update((map) => {...map, section.id: EditStatus.loading});
         try {
-          await ref.read(sectionProvider(courseId).notifier).updateSectionTitle(section.id, newTitle);
+          await ref.read(sectionProvider(_currentCourse?.id ?? widget.courseId).notifier).updateSectionTitle(section.id, newTitle);
           ref.read(sectionEditStatusProvider.notifier).update((map) => {...map, section.id: EditStatus.success});
           await Future.delayed(const Duration(seconds: 1));
           ref.read(sectionEditStatusProvider.notifier).update((map) => {...map, section.id: EditStatus.idle});
@@ -215,7 +536,7 @@ class CourseContentScreen extends ConsumerWidget {
               child: SizedBox(
                 width: double.infinity,
                 child: OutlinedButton.icon(
-                  onPressed: () => _showCreateLessonDialog(context, ref, section.id),
+                  onPressed: () => _showCreateLessonDialog(context, ref, _currentCourse?.id ?? widget.courseId, section.id),
                   icon: const Icon(Icons.add),
                   label: const Text('Добавить урок'),
                   style: OutlinedButton.styleFrom(
@@ -243,6 +564,7 @@ class CourseContentScreen extends ConsumerWidget {
         final updated = List<Lesson>.from(sortedLessons);
         final moved = updated.removeAt(oldIndex);
         updated.insert(newIndex, moved);
+        final courseId = _currentCourse?.id ?? widget.courseId;
         if (sectionId == null) {
           await ref.read(courseLessonsProvider(courseId).notifier).reorderLessons(updated.map((l) => l.id).toList());
           ref.invalidate(courseLessonsProvider(courseId));
@@ -272,6 +594,7 @@ class CourseContentScreen extends ConsumerWidget {
       if (newTitle.isNotEmpty && newTitle != lesson.title) {
         ref.read(lessonEditStatusProvider.notifier).update((map) => {...map, lesson.id: EditStatus.loading});
         try {
+          final courseId = _currentCourse?.id ?? widget.courseId;
           await ref.read(courseLessonsProvider(courseId).notifier).updateLessonTitle(lesson.id, newTitle);
           ref.read(lessonEditStatusProvider.notifier).update((map) => {...map, lesson.id: EditStatus.success});
           await Future.delayed(const Duration(seconds: 1));
@@ -342,9 +665,10 @@ class CourseContentScreen extends ConsumerWidget {
       ),
       visualDensity: VisualDensity.compact,
       contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
-      onTap: () {
-        context.go('/admin/course/$courseId/lesson/${lesson.id}/edit');
-      },
+              onTap: () {
+          final courseId = _currentCourse?.id ?? widget.courseId;
+          context.go('/admin/course/$courseId/lesson/${lesson.id}/edit');
+        },
     );
   }
 
@@ -379,7 +703,7 @@ class CourseContentScreen extends ConsumerWidget {
     );
   }
 
-  void _showCreateSectionDialog(BuildContext context, WidgetRef ref) {
+  void _showCreateSectionDialog(BuildContext context, WidgetRef ref, String courseId) {
     final titleController = TextEditingController();
     final descriptionController = TextEditingController();
 
@@ -445,7 +769,7 @@ class CourseContentScreen extends ConsumerWidget {
     );
   }
 
-  void _showCreateLessonDialog(BuildContext context, WidgetRef ref, String? sectionId) {
+  void _showCreateLessonDialog(BuildContext context, WidgetRef ref, String courseId, String? sectionId) {
     final titleController = TextEditingController();
     final descriptionController = TextEditingController();
     final contentController = TextEditingController();
@@ -565,6 +889,7 @@ class CourseContentScreen extends ConsumerWidget {
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () async {
               try {
+                final courseId = section.courseId;
                 await ref.read(sectionProvider(courseId).notifier).deleteSection(section.id);
                 if (context.mounted) {
                   Navigator.of(context).pop();
@@ -602,6 +927,7 @@ class CourseContentScreen extends ConsumerWidget {
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () async {
               try {
+                final courseId = lesson.courseId;
                 await ref.read(courseLessonsProvider(courseId).notifier).deleteLesson(lesson.id);
                 if (context.mounted) {
                   Navigator.of(context).pop();

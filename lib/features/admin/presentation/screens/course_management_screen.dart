@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 
 import '../../../course/providers/course_provider.dart';
 import '../widgets/course_card.dart';
-import '../widgets/create_course_dialog.dart';
 
 class CourseManagementScreen extends ConsumerWidget {
   const CourseManagementScreen({Key? key}) : super(key: key);
@@ -52,8 +51,6 @@ class CourseManagementScreen extends ConsumerWidget {
                     final course = courseList[index];
                     return CourseCard(
                       course: course,
-                      onEdit: () => _showEditCourseDialog(context, ref, course),
-                      onEditDescription: () => _showEditDescriptionDialog(context, ref, course),
                       onDelete: () => _showDeleteConfirmation(context, ref, course.id),
                       onToggleStatus: (isActive) => ref
                           .read(courseProvider.notifier)
@@ -80,7 +77,7 @@ class CourseManagementScreen extends ConsumerWidget {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => _showCreateCourseDialog(context, ref),
+        onPressed: () => _navigateToCreateCourse(context),
         backgroundColor: Color(0xFF4A90B8), // primaryBlue
         foregroundColor: Colors.white,
         child: const Icon(Icons.add),
@@ -88,70 +85,9 @@ class CourseManagementScreen extends ConsumerWidget {
     );
   }
 
-  void _showCreateCourseDialog(BuildContext context, WidgetRef ref) {
-    showDialog(
-      context: context,
-      builder: (context) => CreateCourseDialog(
-        onCourseCreated: (course) {
-          ref.read(courseProvider.notifier).createCourse(course);
-        },
-      ),
-    );
-  }
-
-  void _showEditCourseDialog(BuildContext context, WidgetRef ref, course) {
-    showDialog(
-      context: context,
-      builder: (context) => CreateCourseDialog(
-        course: course,
-        onCourseCreated: (updatedCourse) {
-          ref.read(courseProvider.notifier).updateCourse(updatedCourse);
-        },
-      ),
-    );
-  }
-
-  void _showEditDescriptionDialog(BuildContext context, WidgetRef ref, course) {
-    final controller = TextEditingController(text: course.description);
-    
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Редактировать описание'),
-        content: TextField(
-          controller: controller,
-          decoration: const InputDecoration(
-            labelText: 'Описание курса',
-            border: OutlineInputBorder(),
-          ),
-          maxLines: 3,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Отмена'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              if (controller.text.trim().isNotEmpty) {
-                final updatedCourse = course.copyWith(
-                  description: controller.text.trim(),
-                  updatedAt: DateTime.now(),
-                );
-                await ref.read(courseProvider.notifier).updateCourse(updatedCourse);
-                if (context.mounted) {
-                  Navigator.of(context).pop();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Описание обновлено')),
-                  );
-                }
-              }
-            },
-            child: const Text('Сохранить'),
-          ),
-        ],
-      ),
-    );
+  void _navigateToCreateCourse(BuildContext context) {
+    // Создаем временный курс и переходим к его редактированию
+    context.go('/admin/course/new/edit');
   }
 
   void _showDeleteConfirmation(BuildContext context, WidgetRef ref, String courseId) {

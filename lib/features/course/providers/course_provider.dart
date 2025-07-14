@@ -31,13 +31,14 @@ class CourseNotifier extends StateNotifier<AsyncValue<List<Course>>> {
     }
   }
 
-  Future<void> createCourse(Course course) async {
+  Future<String> createCourse(Course course) async {
     try {
       final docRef = _firestore.collection('courses').doc();
       final courseWithId = course.copyWith(id: docRef.id);
       
       await docRef.set(courseWithId.toJson());
       await loadCourses();
+      return docRef.id;
     } catch (error) {
       throw Exception('Ошибка создания курса: $error');
     }

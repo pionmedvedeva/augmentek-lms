@@ -10,6 +10,9 @@ import 'package:miniapp/shared/widgets/media_upload_widget.dart';
 import 'package:miniapp/shared/widgets/enhanced_video_player.dart';
 import 'package:miniapp/shared/models/media.dart';
 
+// Провайдер для колбэка сохранения урока
+final lessonSaveCallbackProvider = StateProvider<VoidCallback?>((ref) => null);
+
 class LessonEditScreen extends ConsumerWidget {
   final String courseId;
   final String lessonId;
@@ -19,6 +22,15 @@ class LessonEditScreen extends ConsumerWidget {
     required this.courseId,
     required this.lessonId,
   });
+
+  void _saveLessonFromScreen(BuildContext context, WidgetRef ref, Lesson lesson) {
+    // Найдем LessonEditFormScreen в дереве виджетов и вызовем его метод сохранения
+    // Это делается через GlobalKey, но для простоты создадим новый провайдер
+    final saveCallback = ref.read(lessonSaveCallbackProvider);
+    if (saveCallback != null) {
+      saveCallback();
+    }
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -38,8 +50,26 @@ class LessonEditScreen extends ConsumerWidget {
             ),
           );
         }
-        // Только контент урока и кнопка 'Сохранить', без AppBar/breadcrumbs
-        return LessonEditFormScreen(lesson: lesson);
+        // Оборачиваем в Scaffold с AppBar и кнопкой "Сохранить"
+        return Scaffold(
+          appBar: AppBar(
+            title: Text('Редактирование урока: ${lesson.title}'),
+            actions: [
+              Padding(
+                padding: const EdgeInsets.only(right: 16),
+                child: ElevatedButton(
+                  onPressed: () => _saveLessonFromScreen(context, ref, lesson),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green,
+                    foregroundColor: Colors.white,
+                  ),
+                  child: const Text('Сохранить'),
+                ),
+              ),
+            ],
+          ),
+          body: LessonEditFormScreen(lesson: lesson),
+        );
       },
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (error, stack) => Center(
@@ -88,6 +118,11 @@ class _LessonEditFormScreenState extends ConsumerState<LessonEditFormScreen> {
   void initState() {
     super.initState();
     _titleController = TextEditingController(text: widget.lesson.title);
+    
+    // Устанавливаем колбэк для кнопки "Сохранить" в AppBar
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(lessonSaveCallbackProvider.notifier).state = _saveLesson;
+    });
     _descriptionController = TextEditingController(text: widget.lesson.description);
     _contentController = TextEditingController(text: widget.lesson.content ?? '');
     _homeworkTaskController = TextEditingController(text: widget.lesson.homeworkTask ?? '');
@@ -97,6 +132,9 @@ class _LessonEditFormScreenState extends ConsumerState<LessonEditFormScreen> {
 
   @override
   void dispose() {
+    // Очищаем колбэк
+    ref.read(lessonSaveCallbackProvider.notifier).state = null;
+    
     _titleController.dispose();
     _descriptionController.dispose();
     _contentController.dispose();

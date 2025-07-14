@@ -7,16 +7,12 @@ import 'package:cached_network_image/cached_network_image.dart';
 
 class CourseCard extends ConsumerWidget {
   final Course course;
-  final VoidCallback onEdit;
-  final VoidCallback onEditDescription;
   final VoidCallback onDelete;
   final Function(bool) onToggleStatus;
 
   const CourseCard({
     super.key,
     required this.course,
-    required this.onEdit,
-    required this.onEditDescription,
     required this.onDelete,
     required this.onToggleStatus,
   });
@@ -85,41 +81,26 @@ class CourseCard extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Название курса + кнопка редактирования названия + переключатель активности
+                  // Название курса + переключатель активности
                   Row(
                     children: [
                       Expanded(
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: InkWell(
-                                onTap: () => _navigateToManageContent(context),
-                                borderRadius: BorderRadius.circular(4),
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(vertical: 2),
-                                  child: Text(
-                                    course.title,
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.blue[600],
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
+                        child: InkWell(
+                          onTap: () => _navigateToManageContent(context),
+                          borderRadius: BorderRadius.circular(4),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 2),
+                            child: Text(
+                              course.title,
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.blue[600],
                               ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
-                            IconButton(
-                              onPressed: onEdit,
-                              icon: const Icon(Icons.edit),
-                              iconSize: 16,
-                              padding: const EdgeInsets.all(2),
-                              constraints: const BoxConstraints(),
-                              tooltip: 'Редактировать название',
-                              color: Colors.deepPurple,
-                            ),
-                          ],
+                          ),
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -139,30 +120,15 @@ class CourseCard extends ConsumerWidget {
                   
                   const SizedBox(height: 4),
                   
-                  // Описание курса + кнопка редактирования описания
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          course.description,
-                          style: TextStyle(
-                            color: Colors.grey[600],
-                            fontSize: 13,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      IconButton(
-                        onPressed: onEditDescription,
-                        icon: const Icon(Icons.edit),
-                        iconSize: 14,
-                        padding: const EdgeInsets.all(2),
-                        constraints: const BoxConstraints(),
-                        tooltip: 'Редактировать описание',
-                        color: Colors.grey[500],
-                      ),
-                    ],
+                  // Описание курса
+                  Text(
+                    course.description,
+                    style: TextStyle(
+                      color: Colors.grey[600],
+                      fontSize: 13,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                   
                   const SizedBox(height: 8),
