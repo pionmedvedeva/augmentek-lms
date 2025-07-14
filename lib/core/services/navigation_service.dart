@@ -12,39 +12,32 @@ class NavigationService {
 
   /// Навигация по студенческим табам
   void navigateToStudentTab(BuildContext context, int index) {
-    switch (index) {
-      case 0:
-        context.go('/student?tab=0');
-        break;
-      case 1:
-        context.go('/student?tab=1');
-        break;
-    }
+    context.go('/student?tab=$index');
   }
 
   /// Навигация по админским табам
   void navigateToAdminTab(BuildContext context, int index) {
-    switch (index) {
-      case 0:
-        context.go('/admin?tab=0');
-        break;
-      case 1:
-        context.go('/admin?tab=1');
-        break;
-      case 2:
-        context.go('/admin?tab=2');
-        break;
-    }
+    context.go('/admin?tab=$index');
   }
 
-  /// Навигация по нижним табам (для админов)
+  /// Навигация по нижним табам (для админов) с сохранением состояния
   void navigateToBottomTab(BuildContext context, int index, AppUser user) {
+    final currentRoute = GoRouterState.of(context).uri.toString();
+    
+    // Извлекаем текущий tab параметр если есть
+    final uri = Uri.parse(currentRoute);
+    final currentTab = uri.queryParameters['tab'] ?? '0';
+    
     switch (index) {
       case 0:
-        context.go('/admin');
+        // Переключаем в админский режим, сохраняя tab
+        context.go('/admin?tab=$currentTab');
         break;
       case 1:
-        context.go('/student');
+        // Переключаем в студенческий режим, сохраняя tab (для студентов max tab=1)
+        final studentTab = int.tryParse(currentTab) ?? 0;
+        final safeTab = studentTab > 1 ? '1' : currentTab; // Студенты имеют только 2 таба
+        context.go('/student?tab=$safeTab');
         break;
     }
   }
@@ -215,7 +208,7 @@ class NavigationService {
     return route.startsWith('/student') || route.startsWith('/home');
   }
 
-  /// Определяет, нужно ли показывать админские табы
+  /// Определяет, нужно ли показывать админские табы  
   bool shouldShowAdminTabs(String route) {
     return route.startsWith('/admin') && !route.startsWith('/admin/course/');
   }

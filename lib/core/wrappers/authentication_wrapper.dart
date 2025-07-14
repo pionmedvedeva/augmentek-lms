@@ -5,6 +5,7 @@ import 'package:miniapp/features/auth/providers/user_provider.dart';
 import 'package:miniapp/shared/widgets/error_widget.dart';
 import 'package:miniapp/shared/widgets/debug_log_screen.dart';
 import 'package:miniapp/shared/widgets/app_layout.dart';
+import 'package:miniapp/shared/widgets/app_shell_wrapper.dart';
 import 'package:telegram_web_app/telegram_web_app.dart';
 import 'package:miniapp/core/utils/app_logger.dart';
 import 'package:go_router/go_router.dart';
@@ -145,7 +146,15 @@ class _AuthenticationWrapperState extends ConsumerState<AuthenticationWrapper> {
                 );
               }
               // Пользователь загружен, child есть
-              return AppLayout(user: user, child: widget.child!);
+              return AppShellWrapper(
+                user: user, 
+                child: AppLayout(
+                  user: user, 
+                  child: widget.child!,
+                  showAvatar: false, // AppBar теперь в AppShellWrapper
+                  showBottomNav: false, // BottomNav теперь в AppShellWrapper
+                ),
+              );
             } else {
               // Пользователь аутентифицирован, но данных нет - показываем загрузку
               return const Scaffold(

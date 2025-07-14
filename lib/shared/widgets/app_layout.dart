@@ -1,10 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:miniapp/shared/widgets/enhanced_user_avatar.dart';
-import 'package:miniapp/shared/widgets/debug_log_screen.dart';
-import 'package:miniapp/core/utils/app_logger.dart';
-import 'package:telegram_web_app/telegram_web_app.dart';
 import 'package:miniapp/shared/models/user.dart';
 import 'package:miniapp/core/services/navigation_service.dart';
 import 'package:miniapp/shared/widgets/admin_course_breadcrumbs.dart';
@@ -51,56 +47,12 @@ class _AppLayoutState extends ConsumerState<AppLayout>
       );
     }
 
-    // Получаем индекс нижней навигации через NavigationService
-    final currentIndex = _navigationService.getCurrentBottomTabIndex(currentRoute);
 
-    // Определяем список табов только для админов (BottomNav)
-    final List<BottomNavigationBarItem> bottomTabs = widget.user.isAdmin 
-      ? [
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.admin_panel_settings),
-            label: 'Учительская',
-          ),
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.school),
-            label: 'Студенческая',
-          ),
-        ]
-      : <BottomNavigationBarItem>[];
 
-    // Определяем, показывать ли debug логи
-    final webApp = TelegramWebApp.instance;
-    final isInTelegram = webApp.initDataUnsafe?.user != null;
-    final shouldShowDebugPanel = AppLogger.isDebugMode || isInTelegram;
 
-    Widget mainContent = Scaffold(
-      appBar: widget.showAvatar ? AppBar(
-        title: const Text('Augmentek'),
-        backgroundColor: const Color(0xFF4A90B8), // primaryBlue
-        foregroundColor: Colors.white,
-        automaticallyImplyLeading: false,
-        actions: [
-          // Аватар пользователя с прямым кликом
-          Padding(
-            padding: const EdgeInsets.only(right: 16),
-            child: GestureDetector(
-              onTap: () => _navigationService.showUserProfile(context, widget.user),
-              child: EnhancedUserAvatar(
-                user: widget.user,
-                radius: 18,
-                backgroundColor: Colors.white.withOpacity(0.2),
-                textStyle: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ) : null,
-      body: Column(
-        children: [
+
+    Widget mainContent = Column(
+      children: [
           // Студенческий TabBar (Level 1 navigation)
           if (_navigationService.shouldShowStudentTabs(currentRoute) && tabController != null)
             Container(
@@ -162,22 +114,6 @@ class _AppLayoutState extends ConsumerState<AppLayout>
           // Основной контент
           Expanded(child: widget.child),
         ],
-      ),
-      bottomNavigationBar: (widget.showBottomNav && widget.user.isAdmin) ? Container(
-        margin: EdgeInsets.only(
-          bottom: MediaQuery.of(context).padding.bottom > 0 ? 4 : 0,
-        ),
-        child: BottomNavigationBar(
-          currentIndex: currentIndex,
-          onTap: (index) => _navigationService.navigateToBottomTab(context, index, widget.user),
-          type: BottomNavigationBarType.fixed,
-          selectedItemColor: Theme.of(context).colorScheme.primary,
-          unselectedItemColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-          backgroundColor: Theme.of(context).colorScheme.surface,
-          elevation: 8,
-          items: bottomTabs,
-        ),
-      ) : null,
     );
 
     // Удаляю Stack с debug-кнопкой, оставляю только Scaffold
