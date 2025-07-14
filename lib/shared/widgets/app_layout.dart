@@ -7,6 +7,8 @@ import 'package:miniapp/core/utils/app_logger.dart';
 import 'package:telegram_web_app/telegram_web_app.dart';
 import 'package:miniapp/shared/models/user.dart';
 import 'package:miniapp/core/services/navigation_service.dart';
+import 'package:miniapp/shared/widgets/admin_course_breadcrumbs.dart';
+import 'package:miniapp/shared/widgets/student_course_breadcrumbs.dart';
 
 /// AppLayout отвечает только за UI: шапка, аватар, табы, навигация, debug-кнопка
 /// Не содержит логики аутентификации и инициализации
@@ -151,9 +153,11 @@ class _AppLayoutState extends ConsumerState<AppLayout>
           
           // Breadcrumbs (Level 2+ navigation)
           if (currentRoute.startsWith('/admin/course/'))
-            _navigationService.buildAdminCourseBreadcrumbs(currentRoute)
-          else if (_navigationService.shouldShowBreadcrumbs(currentRoute))
-            _navigationService.buildBreadcrumbs(currentRoute),
+            AdminCourseBreadcrumbs(currentRoute: currentRoute)
+          else if (currentRoute.startsWith('/student/course/'))
+            StudentCourseBreadcrumbs(currentRoute: currentRoute)
+          else if (_shouldShowBreadcrumbs(currentRoute))
+            _buildBreadcrumbs(currentRoute),
 
           // Основной контент
           Expanded(child: widget.child),
@@ -196,5 +200,103 @@ class _AppLayoutState extends ConsumerState<AppLayout>
     // }
 
     return mainContent;
+  }
+
+  bool _shouldShowBreadcrumbs(String route) {
+    // Показываем breadcrumbs для вложенных экранов (Level 2+)
+    // Исключаем /admin/course/ и /student/course/ - для них есть специальные виджеты
+    return (route.contains('/homework') && !route.startsWith('/student/course/')) ||
+           route.contains('/users/') ||
+           (route.contains('/course/') && !route.startsWith('/admin/course/') && !route.startsWith('/student/course/'));
+  }
+
+  Widget _buildBreadcrumbs(String route) {
+    final parts = _getBreadcrumbParts(route);
+    if (parts.isEmpty) return const SizedBox.shrink();
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.grey[100],
+        border: Border(bottom: BorderSide(color: Colors.grey[300]!)),
+      ),
+      child: Row(
+        children: [
+          // Кнопка назад
+          IconButton(
+            onPressed: () => _navigateBack(route),
+            icon: const Icon(Icons.arrow_back),
+            iconSize: 20,
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+          ),
+          const SizedBox(width: 8),
+          // Breadcrumb trail
+          Expanded(
+            child: Row(
+              children: parts.map((part) {
+                final isLast = part == parts.last;
+                return Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (part != parts.first) ...[
+                      const SizedBox(width: 4),
+                      Icon(Icons.chevron_right, size: 16, color: Colors.grey[600]),
+                      const SizedBox(width: 4),
+                    ],
+                    Text(
+                      part,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: isLast ? FontWeight.w600 : FontWeight.normal,
+                        color: isLast ? Colors.black87 : Colors.grey[600],
+                      ),
+                    ),
+                  ],
+                );
+              }).toList(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  List<String> _getBreadcrumbParts(String route) {
+    final parts = <String>[];
+    
+    if (route.contains('/student/homework')) {
+      parts.add('Учеба');
+      parts.add('Домашние задания');
+    } else if (route.contains('/admin/users/')) {
+      parts.add('Пользователи');
+      parts.add('Профиль');
+    } else if (route.startsWith('/admin') && route.contains('/course/')) {
+      parts.add('Курсы');
+      if (route.contains('/lesson/') && route.contains('/edit')) {
+        parts.add('Редактирование курса');
+        parts.add('Редактирование урока');
+      } else if (route.contains('/edit')) {
+        parts.add('Редактирование курса');
+      }
+    }
+    
+    return parts;
+  }
+
+  void _navigateBack(String route) {
+    // Логика навигации назад в рамках текущего таба
+    if (route.contains('/student/homework')) {
+      // Из домашек возвращаемся к учебе
+      context.go('/student?tab=1');
+    } else if (route.contains('/admin/users/')) {
+      // Из профиля пользователя к списку пользователей
+      context.go('/admin?tab=1');
+    } else {
+      // Дефолтное поведение - просто назад
+      if (context.canPop()) {
+        context.pop();
+      }
+    }
   }
 } 

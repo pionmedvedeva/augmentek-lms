@@ -27,7 +27,7 @@ import 'package:miniapp/features/course/presentation/screens/lesson_edit_screen.
 import 'package:miniapp/shared/models/course.dart';
 import 'package:miniapp/shared/widgets/error_widget.dart';
 import 'package:miniapp/shared/widgets/debug_log_screen.dart';
-import 'package:miniapp/shared/widgets/main_shell.dart';
+
 import 'package:url_strategy/url_strategy.dart';
 import 'package:telegram_web_app/telegram_web_app.dart';
 import 'package:miniapp/features/admin/presentation/screens/admin_navigation_screen.dart';

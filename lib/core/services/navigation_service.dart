@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:miniapp/shared/models/user.dart';
+import 'package:miniapp/shared/widgets/enhanced_user_avatar.dart';
+import 'package:miniapp/shared/widgets/debug_log_screen.dart';
 
 /// NavigationService отвечает за логику роутинга и навигации
 class NavigationService {
@@ -101,9 +103,90 @@ class NavigationService {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Имя: ${user.firstName} ${user.lastName ?? ''}'),
-            Text('Роль: ${user.isAdmin ? 'Администратор' : 'Студент'}'),
-            if (user.username != null) Text('Username: @${user.username}'),
+            Row(
+              children: [
+                EnhancedUserAvatar(
+                  user: user,
+                  radius: 40,
+                  backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                  textStyle: TextStyle(
+                    color: Theme.of(context).colorScheme.primary,
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '${user.firstName} ${user.lastName ?? ''}',
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      if (user.username?.isNotEmpty == true)
+                        Text(
+                          '@${user.username}',
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: 14,
+                          ),
+                        ),
+                      if (user.isAdmin)
+                        Container(
+                          margin: const EdgeInsets.only(top: 6),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFE8A87C), // accentOrange
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Text(
+                            'Администратор',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade100,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.info_outline,
+                    size: 16,
+                    color: Colors.grey[600],
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'ID: ${user.id}',
+                      style: TextStyle(
+                        color: Colors.grey[600],
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
         actions: [
@@ -118,7 +201,13 @@ class NavigationService {
 
   /// Показать debug логи
   void showDebugLogs(BuildContext context) {
-    Navigator.of(context).pushNamed('/debug');
+    showDialog(
+      context: context,
+      builder: (context) => const DebugLogScreen(
+        child: SizedBox.shrink(),
+        showLogs: true,
+      ),
+    );
   }
 
   /// Определяет, нужно ли показывать студенческие табы
