@@ -116,4 +116,80 @@ class StringUtils {
       r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$',
     ).hasMatch(password);
   }
+}
+
+/// Склонение числительных с существительными в русском языке
+class RussianPlurals {
+  /// Склонение для пользователей
+  static String users(int count) {
+    return _pluralize(count, 'пользователь', 'пользователя', 'пользователей');
+  }
+
+  /// Склонение для студентов
+  static String students(int count) {
+    return _pluralize(count, 'студент', 'студента', 'студентов');
+  }
+
+  /// Склонение для курсов
+  static String courses(int count) {
+    return _pluralize(count, 'курс', 'курса', 'курсов');
+  }
+
+  /// Склонение для уроков
+  static String lessons(int count) {
+    return _pluralize(count, 'урок', 'урока', 'уроков');
+  }
+
+  /// Склонение для разделов
+  static String sections(int count) {
+    return _pluralize(count, 'раздел', 'раздела', 'разделов');
+  }
+
+  /// Форматирование числа с правильным склонением для пользователей
+  static String formatUsers(int count) {
+    return '$count ${users(count)}';
+  }
+
+  /// Форматирование числа с правильным склонением для студентов
+  static String formatStudents(int count) {
+    return '$count ${students(count)}';
+  }
+
+  /// Форматирование числа с правильным склонением для курсов
+  static String formatCourses(int count) {
+    return '$count ${courses(count)}';
+  }
+
+  /// Форматирование числа с правильным склонением для уроков
+  static String formatLessons(int count) {
+    return '$count ${lessons(count)}';
+  }
+
+  /// Форматирование числа с правильным склонением для разделов
+  static String formatSections(int count) {
+    return '$count ${sections(count)}';
+  }
+
+  /// Базовая функция склонения
+  /// [one] - для 1 (1 пользователь)
+  /// [few] - для 2-4 (2 пользователя)
+  /// [many] - для 0, 5+ (5 пользователей)
+  static String _pluralize(int count, String one, String few, String many) {
+    final absCount = count.abs();
+    
+    // Исключения для чисел 11-14
+    if (absCount % 100 >= 11 && absCount % 100 <= 14) {
+      return many;
+    }
+    
+    final lastDigit = absCount % 10;
+    
+    if (lastDigit == 1) {
+      return one;
+    } else if (lastDigit >= 2 && lastDigit <= 4) {
+      return few;
+    } else {
+      return many;
+    }
+  }
 } 

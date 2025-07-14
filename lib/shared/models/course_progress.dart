@@ -1,5 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'lesson_progress.dart';
+import 'package:miniapp/core/utils/string_utils.dart';
 
 part 'course_progress.freezed.dart';
 part 'course_progress.g.dart';
@@ -62,7 +63,7 @@ class CourseProgress with _$CourseProgress {
   int get completionPercent => (completionPercentage * 100).round();
   
   /// Текстовое описание прогресса
-  String get progressText => '$completedLessons из $totalLessons уроков';
+  String get progressText => '$completedLessons из ${RussianPlurals.formatLessons(totalLessons)}';
   
   /// Есть ли следующий урок
   bool get hasNextLesson => nextLessonId != null && nextLessonId!.isNotEmpty;

@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:miniapp/shared/models/lesson_progress.dart';
 import 'package:miniapp/shared/models/course_progress.dart';
+import 'package:miniapp/core/utils/string_utils.dart';
 
 void main() {
   group('LessonProgress', () {
@@ -193,7 +194,7 @@ void main() {
       );
 
       expect(progress.completionPercent, 75);
-      expect(progress.progressText, '7 из 10 уроков');
+      expect(progress.progressText, '7 из ${RussianPlurals.formatLessons(10)}');
       expect(progress.hasPendingHomework, true);
       expect(progress.hasNextLesson, true);
     });

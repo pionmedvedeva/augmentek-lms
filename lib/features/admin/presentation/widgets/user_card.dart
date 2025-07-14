@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:miniapp/shared/models/user.dart';
 import 'package:miniapp/features/course/providers/course_provider.dart';
 import 'package:miniapp/shared/widgets/enhanced_user_avatar.dart';
+import 'package:miniapp/core/utils/string_utils.dart';
 
 class UserCard extends ConsumerWidget {
   final AppUser user;
@@ -119,7 +120,7 @@ class UserCard extends ConsumerWidget {
                     
                     if (enrolledCourses.isEmpty) {
                       return Text(
-                        'Записан на ${user.enrolledCourses.length} курсов (курсы не найдены)',
+                        'Записан на ${RussianPlurals.formatCourses(user.enrolledCourses.length)} (курсы не найдены)',
                         style: TextStyle(
                           color: Colors.grey[600],
                           fontSize: 12,
@@ -153,7 +154,7 @@ class UserCard extends ConsumerWidget {
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              'Записан на ${enrolledCourses.length} курсов',
+                              'Записан на ${RussianPlurals.formatCourses(enrolledCourses.length)}',
                               style: TextStyle(
                                 color: Colors.grey[700],
                                 fontSize: 12,
@@ -247,7 +248,7 @@ class UserCard extends ConsumerWidget {
                     ),
                   ),
                   error: (_, __) => Text(
-                    'Записан на ${user.enrolledCourses.length} курсов',
+                    'Записан на ${RussianPlurals.formatCourses(user.enrolledCourses.length)}',
                     style: TextStyle(
                       color: Colors.grey[600],
                       fontSize: 12,

@@ -6,6 +6,7 @@ import 'package:miniapp/features/course/providers/course_provider.dart';
 import 'package:miniapp/features/course/providers/enrollment_provider.dart';
 import 'package:miniapp/shared/models/course.dart';
 import 'package:miniapp/features/student/presentation/screens/student_course_view_screen.dart';
+import 'package:miniapp/core/utils/string_utils.dart';
 
 class CourseListScreen extends ConsumerStatefulWidget {
   const CourseListScreen({super.key});
@@ -241,7 +242,7 @@ class AvailableCourseCard extends ConsumerWidget {
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            '${course.enrolledCount} студентов',
+                            RussianPlurals.formatStudents(course.enrolledCount),
                             style: TextStyle(
                               color: Colors.grey[500],
                               fontSize: 12,

@@ -7,6 +7,7 @@ import 'package:miniapp/shared/models/section.dart';
 import 'package:miniapp/features/course/providers/lesson_provider.dart';
 import 'package:miniapp/features/course/providers/section_provider.dart';
 import 'package:miniapp/features/course/presentation/screens/lesson_view_screen.dart';
+import 'package:miniapp/core/utils/string_utils.dart';
 
 class StudentCourseViewScreen extends ConsumerWidget {
   final Course course;
@@ -235,7 +236,7 @@ class StudentCourseViewScreen extends ConsumerWidget {
             fontWeight: FontWeight.bold,
           ),
         ),
-        subtitle: Text('${lessons.length} уроков'),
+        subtitle: Text(RussianPlurals.formatLessons(lessons.length)),
         children: lessons.map((lesson) => _buildLessonCard(context, ref, lesson, isInSection: true)).toList(),
       ),
     );

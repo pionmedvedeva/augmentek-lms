@@ -6,6 +6,7 @@ import 'package:miniapp/features/course/providers/course_provider.dart';
 import 'package:miniapp/shared/models/user.dart';
 import 'package:miniapp/shared/models/course.dart';
 import 'package:miniapp/shared/widgets/enhanced_user_avatar.dart';
+import 'package:miniapp/core/utils/string_utils.dart';
 
 class UserListScreen extends ConsumerWidget {
   const UserListScreen({super.key});
@@ -59,7 +60,7 @@ class UserListScreen extends ConsumerWidget {
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            'Всего пользователей: ${userList.length}',
+                            'Всего ${RussianPlurals.formatUsers(userList.length)}',
                             style: const TextStyle(
                               fontWeight: FontWeight.bold,
                               color: Colors.deepPurple,
@@ -251,7 +252,7 @@ class UserListScreen extends ConsumerWidget {
                             ),
                             error: (_, __) => _buildInfoCard(
                               'Записан на курсы',
-                              'Записан на ${user.enrolledCourses.length} курсов',
+                              'Записан на ${RussianPlurals.formatCourses(user.enrolledCourses.length)}',
                             ),
                           ),
                         ] else ...[
